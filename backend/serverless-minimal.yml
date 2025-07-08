@@ -1,0 +1,134 @@
+service: investment-tracker-backend
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.11
+  region: ${opt:region, 'ap-southeast-2'}
+  stage: ${opt:stage, 'dev'}
+  
+  memorySize: 256
+  timeout: 30
+  
+  environment:
+    STAGE: ${self:provider.stage}
+    REGION: ${self:provider.region}
+    PORTFOLIOS_TABLE: ${self:service}-${self:provider.stage}-portfolios
+    STOCKS_TABLE: ${self:service}-${self:provider.stage}-stocks
+    ETFS_TABLE: ${self:service}-${self:provider.stage}-etfs
+    PROPERTIES_TABLE: ${self:service}-${self:provider.stage}-properties
+    PRICE_HISTORY_TABLE: ${self:service}-${self:provider.stage}-price-history
+    ALPHA_VANTAGE_API_KEY: ${env:ALPHA_VANTAGE_API_KEY}
+    FINNHUB_API_KEY: ${env:FINNHUB_API_KEY}
+  
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PORTFOLIOS_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.STOCKS_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ETFS_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PROPERTIES_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PRICE_HISTORY_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PORTFOLIOS_TABLE}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.STOCKS_TABLE}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ETFS_TABLE}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PROPERTIES_TABLE}/index/*"
+
+functions:
+  getPortfolios:
+    handler: functions/portfolio/get_portfolios.handler
+    events:
+      - httpApi:
+          path: /portfolios
+          method: get
+
+  createPortfolio:
+    handler: functions/portfolio/create_portfolio.handler
+    events:
+      - httpApi:
+          path: /portfolios
+          method: post
+
+  getStocks:
+    handler: functions/stocks/get_stocks.handler
+    events:
+      - httpApi:
+          path: /portfolios/{portfolioId}/stocks
+          method: get
+
+  createStock:
+    handler: functions/stocks/create_stock.handler
+    events:
+      - httpApi:
+          path: /portfolios/{portfolioId}/stocks
+          method: post
+
+resources:
+  Resources:
+    PortfoliosTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.PORTFOLIOS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    StocksTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.STOCKS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: portfolioId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: portfolioId-index
+            KeySchema:
+              - AttributeName: portfolioId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
+    PriceHistoryTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.PRICE_HISTORY_TABLE}
+        AttributeDefinitions:
+          - AttributeName: symbol
+            AttributeType: S
+          - AttributeName: date
+            AttributeType: S
+        KeySchema:
+          - AttributeName: symbol
+            KeyType: HASH
+          - AttributeName: date
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+
+  Outputs:
+    ApiGatewayUrl:
+      Description: "API Gateway URL"
+      Value: !Sub "https://${HttpApi}.execute-api.${self:provider.region}.amazonaws.com"
+
+plugins:
+  - serverless-python-requirements
+  - serverless-offline

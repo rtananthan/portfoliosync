@@ -1,0 +1,24 @@
+{
+  "name": "portfoliosync",
+  "version": "1.0.0",
+  "description": "PortfolioSync - Modern investment tracking platform for smart investors",
+  "author": "PortfolioSync",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/username/portfoliosync.git"
+  },
+  "keywords": [
+    "investment-tracking",
+    "portfolio-management", 
+    "stock-tracking",
+    "micro-saas",
+    "fintech",
+    "aws-serverless"
+  ],
+  "scripts": {
+    "backend:deploy": "cd backend && serverless deploy",
+    "frontend:build": "cd frontend && npm run build",
+    "frontend:deploy": "cd frontend && npm run build && aws s3 sync dist/ s3://portfoliosync-frontend-dev --delete"
+  }
+}

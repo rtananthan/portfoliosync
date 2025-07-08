@@ -1,0 +1,65 @@
+{
+  "investments": {
+    "stocks": { "value": 27977, "count": 5, "return": 12.1 },
+    "etfs": { "value": 71335, "count": 2, "return": 14.4 },
+    "properties": { "value": 2275000, "count": 2, "return": 17.2 }
+  },
+  "properties": [
+    {
+      "id": 1,
+      "address": "123 Main St, Seattle, WA 98101",
+      "type": "residential",
+      "purchasePrice": 750000,
+      "currentValue": 895000,
+      "purchaseDate": "2022-03-15",
+      "return": 19.3,
+      "returnDollar": 145000,
+      "sqft": 2100,
+      "bedrooms": 3,
+      "bathrooms": 2.5
+    },
+    {
+      "id": 2,
+      "address": "456 Business Ave, Austin, TX 78701",
+      "type": "commercial",
+      "purchasePrice": 1200000,
+      "currentValue": 1380000,
+      "purchaseDate": "2021-08-22",
+      "return": 15.0,
+      "returnDollar": 180000,
+      "sqft": 4500,
+      "bedrooms": null,
+      "bathrooms": 3
+    },
+    {
+      "id": 3,
+      "address": "789 Oak Drive, Portland, OR 97201",
+      "type": "residential",
+      "purchasePrice": 525000,
+      "currentValue": 615000,
+      "purchaseDate": "2023-01-10",
+      "return": 17.1,
+      "returnDollar": 90000,
+      "sqft": 1850,
+      "bedrooms": 2,
+      "bathrooms": 2
+    }
+  ],
+  "recentActivity": [
+    {
+      "symbol": "AAPL",
+      "description": "50 shares",
+      "return": 8.5
+    },
+    {
+      "symbol": "VOO",
+      "description": "100 shares",
+      "return": 10.2
+    },
+    {
+      "symbol": "Seattle Property",
+      "description": "Residential",
+      "return": 19.3
+    }
+  ]
+}

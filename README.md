@@ -225,6 +225,18 @@ npm run lint        # Run ESLint
 4. Add tests if applicable
 5. Submit a pull request
 
+## 📋 Documentation
+
+- **[Features](FEATURES.md)** - Complete feature list and capabilities
+- **[Roadmap](ROADMAP.md)** - Product roadmap and feature backlog
+- **[Brand Guidelines](BRAND.md)** - Brand identity and SaaS positioning
+- **[Cost Optimization](COST_OPTIMIZATION.md)** - AWS cost monitoring and optimization
+
+## 🎯 Project Management
+
+- **[GitHub Issues](https://github.com/rtananthan/portfoliosync/issues)** - Feature backlog and bug tracking
+- **[GitHub Projects](https://github.com/rtananthan/portfoliosync/projects)** - Development progress and milestones
+
 ## License
 
 This project is licensed under the MIT License.

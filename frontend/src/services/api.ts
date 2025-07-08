@@ -18,8 +18,12 @@ function convertDecimalStrings(obj: any): any {
             (key.includes('Price') || key.includes('Value') || key.includes('Return') || 
              key.includes('percentage') || key.includes('Percentage') || key.includes('Cost') ||
              key.includes('Ratio') || key.includes('Amount') || key.includes('Expense') ||
+             key.includes('Rates') || key.includes('Fees') || key.includes('Tax') ||
+             key.includes('Yield') || key.includes('Growth') || key.includes('Flow') ||
+             key.includes('Size') || key.includes('Area') || key.includes('Rent') ||
              key === 'quantity' || key === 'expenseRatio' || key === 'lastDistributionAmount' ||
-             key === 'annualExpenseCost' || key === 'daysHeld')) {
+             key === 'annualExpenseCost' || key === 'daysHeld' || key === 'bedrooms' || 
+             key === 'bathrooms' || key === 'carSpaces' || key === 'yearBuilt')) {
           converted[key] = parseFloat(value);
         } else {
           converted[key] = convertDecimalStrings(value);

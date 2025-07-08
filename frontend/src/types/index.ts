@@ -50,15 +50,61 @@ export interface ETF {
 export interface Property {
   id: string;
   address: string;
-  type: 'residential' | 'commercial' | 'land';
+  propertyType: 'house' | 'unit' | 'townhouse' | 'duplex' | 'commercial' | 'land' | 'rural';
   purchasePrice: number;
-  currentValue: number;
-  totalReturn: number;
-  returnPercentage: number;
   purchaseDate: string;
-  sqft?: number;
+  currentValue: number;
+  
+  // Property Details
   bedrooms?: number;
   bathrooms?: number;
+  carSpaces?: number;
+  landSize?: number;           // Square meters
+  floorArea?: number;          // Built-up area in square meters
+  yearBuilt?: number;
+  councilArea?: string;
+  
+  // Purchase Costs (Australian specific)
+  stampDuty?: number;
+  legalFees?: number;
+  otherPurchaseCosts?: number;
+  totalPurchaseCosts: number;  // purchasePrice + all additional costs
+  
+  // Rental Information
+  weeklyRent?: number;
+  annualRentalIncome: number;
+  tenantName?: string;
+  leaseStartDate?: string;
+  leaseEndDate?: string;
+  bondAmount?: number;
+  propertyManager?: string;
+  managementFeePercentage?: number;
+  
+  // Ongoing Expenses (Annual)
+  councilRates?: number;
+  waterRates?: number;
+  insurance?: number;
+  propertyManagementFees?: number;
+  maintenanceRepairs?: number;
+  strataFees?: number;        // Body corporate fees for units
+  landTax?: number;           // Investment property land tax
+  totalAnnualExpenses: number;
+  
+  // Calculated Fields
+  capitalGrowth: number;              // currentValue - totalPurchaseCosts
+  capitalGrowthPercentage: number;    // (capitalGrowth / totalPurchaseCosts) * 100
+  grossRentalYield: number;           // (annualRentalIncome / currentValue) * 100
+  netRentalYield: number;             // ((annualRentalIncome - totalAnnualExpenses) / currentValue) * 100
+  annualCashFlow: number;             // annualRentalIncome - totalAnnualExpenses
+  totalReturn: number;                // capitalGrowth + (total rental income - total expenses)
+  returnPercentage: number;           // (totalReturn / totalPurchaseCosts) * 100
+  daysHeld?: number;                  // Days since purchase
+  
+  // Valuation Information
+  valuationDate?: string;
+  valuationMethod?: 'professional' | 'online' | 'council' | 'estimate';
+  
+  // Metadata
   createdAt: string;
   updatedAt: string;
 }
@@ -117,11 +163,44 @@ export interface CreateETFRequest {
 
 export interface CreatePropertyRequest {
   address: string;
-  type: 'residential' | 'commercial' | 'land';
+  propertyType: 'house' | 'unit' | 'townhouse' | 'duplex' | 'commercial' | 'land' | 'rural';
   purchasePrice: number;
-  currentValue: number;
   purchaseDate: string;
-  sqft?: number;
+  currentValue: number;
+  
+  // Property Details
   bedrooms?: number;
   bathrooms?: number;
+  carSpaces?: number;
+  landSize?: number;
+  floorArea?: number;
+  yearBuilt?: number;
+  councilArea?: string;
+  
+  // Purchase Costs
+  stampDuty?: number;
+  legalFees?: number;
+  otherPurchaseCosts?: number;
+  
+  // Rental Information
+  weeklyRent?: number;
+  tenantName?: string;
+  leaseStartDate?: string;
+  leaseEndDate?: string;
+  bondAmount?: number;
+  propertyManager?: string;
+  managementFeePercentage?: number;
+  
+  // Annual Expenses
+  councilRates?: number;
+  waterRates?: number;
+  insurance?: number;
+  propertyManagementFees?: number;
+  maintenanceRepairs?: number;
+  strataFees?: number;
+  landTax?: number;
+  
+  // Valuation Information
+  valuationDate?: string;
+  valuationMethod?: 'professional' | 'online' | 'council' | 'estimate';
 }

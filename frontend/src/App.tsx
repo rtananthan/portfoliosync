@@ -2,7 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import StocksPage from './pages/StocksPage'
 import ETFs from './pages/ETFs'
-import PropertiesPage from './pages/PropertiesPage'
+import Properties from './pages/Properties'
 
 function App() {
   return (
@@ -11,7 +11,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/stocks" element={<StocksPage />} />
         <Route path="/etfs" element={<ETFs />} />
-        <Route path="/properties" element={<PropertiesPage />} />
+        <Route path="/properties" element={<Properties />} />
       </Routes>
     </div>
   )

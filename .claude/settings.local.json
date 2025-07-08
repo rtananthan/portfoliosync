@@ -53,7 +53,8 @@
       "Bash(echo '    --name \"\"investment-tracker/finnhub-api-key\"\" \\'\necho ' --description \"Finnhub API Key for Investment Tracker\" '')",
       "Bash(git add:*)",
       "Bash(git log:*)",
-      "Bash(aws ce:*)"
+      "Bash(aws ce:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }

@@ -109,10 +109,10 @@ export default function HomePage() {
           <BarChart3 className="h-5 w-5 mr-2" />
           Add ETF
         </Link>
-        <button className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
+        <Link to="/properties" className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
           <Home className="h-5 w-5 mr-2" />
           Add Property
-        </button>
+        </Link>
       </div>
     </div>
   )

@@ -151,6 +151,35 @@ functions:
           path: /etfs/{etfId}
           method: delete
 
+  # Property Functions
+  getProperties:
+    handler: functions/properties/get_properties.handler
+    events:
+      - httpApi:
+          path: /portfolios/{portfolioId}/properties
+          method: get
+
+  createProperty:
+    handler: functions/properties/create_property.handler
+    events:
+      - httpApi:
+          path: /portfolios/{portfolioId}/properties
+          method: post
+
+  updateProperty:
+    handler: functions/properties/update_property.handler
+    events:
+      - httpApi:
+          path: /properties/{propertyId}
+          method: put
+
+  deleteProperty:
+    handler: functions/properties/delete_property.handler
+    events:
+      - httpApi:
+          path: /properties/{propertyId}
+          method: delete
+
 resources:
   Resources:
     PortfoliosTable:
@@ -190,6 +219,27 @@ resources:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: ${self:provider.environment.ETFS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: portfolioId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: portfolioId-index
+            KeySchema:
+              - AttributeName: portfolioId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
+    PropertiesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.PROPERTIES_TABLE}
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S

@@ -51,7 +51,8 @@
       "Bash(echo 'aws secretsmanager create-secret \\'\necho ' --name \"investment-tracker/alpha-vantage-api-key\" '')",
       "Bash(echo '    --description \"\"Alpha Vantage API Key for Investment Tracker\"\" \\'\necho ' --secret-string \"YOUR_ALPHA_VANTAGE_KEY_HERE\"'\necho \"\"\"\"\necho \"\"# Store Finnhub Key:\"\"\necho 'aws secretsmanager create-secret '')",
       "Bash(echo '    --name \"\"investment-tracker/finnhub-api-key\"\" \\'\necho ' --description \"Finnhub API Key for Investment Tracker\" '')",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git log:*)"
     ],
     "deny": []
   }

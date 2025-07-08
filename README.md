@@ -2,6 +2,16 @@
 
 A comprehensive full-stack investment tracking platform for modern investors. Sync all your investments in one intelligent dashboard.
 
+## 📸 Screenshots
+
+### Dashboard Overview
+![PortfolioSync Dashboard](screenshots/homepage-dashboard.png)
+*Clean, modern dashboard showing portfolio overview with real-time values and performance metrics*
+
+### Stock Tracking
+![Stock Portfolio Management](screenshots/stock-tracking-page.png)
+*Advanced stock tracking with smart price caching, P&L calculations, and manual refresh controls*
+
 ## Features
 
 - **Portfolio Management**: Create and manage multiple investment portfolios

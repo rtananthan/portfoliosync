@@ -16,6 +16,12 @@ frontend/src/data/userData.json
 personalData.json
 myInvestments.json
 
+# Private business documents
+private/
+COMPETITION_ANALYSIS.md
+BUSINESS_PLAN.md
+FINANCIAL_PROJECTIONS.md
+
 # Python
 __pycache__/
 *.py[cod]

@@ -54,7 +54,8 @@
       "Bash(git add:*)",
       "Bash(git log:*)",
       "Bash(aws ce:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git filter-branch:*)"
     ],
     "deny": []
   }

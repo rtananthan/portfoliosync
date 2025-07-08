@@ -6,6 +6,8 @@ import { stocksService, ensureDefaultPortfolio } from '../services/stocksService
 import { marketDataService } from '../services/marketDataService'
 import AddStockModalEnhanced from '../components/AddStockModalEnhanced'
 import EditStockModal from '../components/EditStockModal'
+import ConfirmDialog from '../components/ConfirmDialog'
+import SearchFilter, { FilterOption, SortOption } from '../components/SearchFilter'
 
 export default function StocksPage() {
   const [stocks, setStocks] = useState<Stock[]>([])
@@ -20,6 +22,20 @@ export default function StocksPage() {
   const [lastPriceUpdate, setLastPriceUpdate] = useState<string>('')
   const [priceUpdateInfo, setPriceUpdateInfo] = useState<{cached: number, fresh: number, sources: string[]}>({cached: 0, fresh: 0, sources: []})
   const [error, setError] = useState<string>('')
+  const [deleteConfirm, setDeleteConfirm] = useState<{isOpen: boolean, stock: Stock | null, isDeleting: boolean}>({
+    isOpen: false,
+    stock: null,
+    isDeleting: false
+  })
+  
+  // Search and filter state
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filters, setFilters] = useState<Record<string, string[]>>({
+    sector: [],
+    currency: [],
+    exchange: []
+  })
+  const [sortBy, setSortBy] = useState('symbol')
 
   // Load stocks on component mount
   useEffect(() => {
@@ -98,18 +114,31 @@ export default function StocksPage() {
     }
   }
 
-  const handleDeleteStock = async (stockId: string) => {
-    if (!confirm('Are you sure you want to delete this stock?')) {
-      return
-    }
-    
+  const handleDeleteStock = (stock: Stock) => {
+    setDeleteConfirm({
+      isOpen: true,
+      stock,
+      isDeleting: false
+    })
+  }
+
+  const confirmDeleteStock = async () => {
+    if (!deleteConfirm.stock) return
+
     try {
-      await stocksService.deleteStock(stockId)
-      setStocks(prevStocks => prevStocks.filter(stock => stock.id !== stockId))
+      setDeleteConfirm(prev => ({ ...prev, isDeleting: true }))
+      await stocksService.deleteStock(deleteConfirm.stock.id)
+      setStocks(prevStocks => prevStocks.filter(s => s.id !== deleteConfirm.stock!.id))
+      setDeleteConfirm({ isOpen: false, stock: null, isDeleting: false })
     } catch (err) {
       console.error('Error deleting stock:', err)
-      alert('Failed to delete stock. Please try again.')
+      setError('Failed to delete stock. Please try again.')
+      setDeleteConfirm(prev => ({ ...prev, isDeleting: false }))
     }
+  }
+
+  const cancelDeleteStock = () => {
+    setDeleteConfirm({ isOpen: false, stock: null, isDeleting: false })
   }
 
   const handleRefreshPrices = async (forceRefresh: boolean = false) => {
@@ -154,13 +183,118 @@ export default function StocksPage() {
     }
   }
 
-  // Calculate totals from API data (with safety checks and enhanced P&L)
+  // Filter and search logic
   const safeStocks = Array.isArray(stocks) ? stocks : []
-  const totalValue = safeStocks.reduce((sum, stock) => sum + (Number(stock.totalValue) || 0), 0)
-  const totalCostBasis = safeStocks.reduce((sum, stock) => 
+  
+  const filteredStocks = safeStocks.filter(stock => {
+    // Search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase()
+      const matchesSearch = 
+        stock.symbol.toLowerCase().includes(searchLower) ||
+        (stock.name && stock.name.toLowerCase().includes(searchLower)) ||
+        (stock.sector && stock.sector.toLowerCase().includes(searchLower))
+      
+      if (!matchesSearch) return false
+    }
+    
+    // Category filters
+    if (filters.sector.length > 0 && stock.sector) {
+      if (!filters.sector.includes(stock.sector)) return false
+    }
+    
+    if (filters.currency.length > 0 && stock.currency) {
+      if (!filters.currency.includes(stock.currency)) return false
+    }
+    
+    if (filters.exchange.length > 0 && stock.exchange) {
+      if (!filters.exchange.includes(stock.exchange)) return false
+    }
+    
+    return true
+  })
+
+  // Sort filtered stocks
+  const sortedStocks = [...filteredStocks].sort((a, b) => {
+    switch (sortBy) {
+      case 'symbol':
+        return a.symbol.localeCompare(b.symbol)
+      case 'symbol_desc':
+        return b.symbol.localeCompare(a.symbol)
+      case 'value':
+        return (Number(b.totalValue) || 0) - (Number(a.totalValue) || 0)
+      case 'value_asc':
+        return (Number(a.totalValue) || 0) - (Number(b.totalValue) || 0)
+      case 'return':
+        return (Number(b.returnPercentage) || 0) - (Number(a.returnPercentage) || 0)
+      case 'return_asc':
+        return (Number(a.returnPercentage) || 0) - (Number(b.returnPercentage) || 0)
+      case 'date':
+        return new Date(b.purchaseDate || '').getTime() - new Date(a.purchaseDate || '').getTime()
+      case 'date_asc':
+        return new Date(a.purchaseDate || '').getTime() - new Date(b.purchaseDate || '').getTime()
+      default:
+        return 0
+    }
+  })
+  
+  // Calculate totals from filtered data
+  const totalValue = filteredStocks.reduce((sum, stock) => sum + (Number(stock.totalValue) || 0), 0)
+  const totalCostBasis = filteredStocks.reduce((sum, stock) => 
     sum + (Number(stock.totalCostBasis) || (Number(stock.quantity) * Number(stock.purchasePrice || stock.averagePrice)) || 0), 0)
-  const totalReturn = safeStocks.reduce((sum, stock) => sum + (Number(stock.totalReturn) || 0), 0)
+  const totalReturn = filteredStocks.reduce((sum, stock) => sum + (Number(stock.totalReturn) || 0), 0)
   const totalReturnPercent = totalCostBasis > 0 ? ((totalReturn / totalCostBasis) * 100) : 0
+  
+  // Generate filter options from current data
+  const generateFilterOptions = (key: keyof Stock): FilterOption[] => {
+    const values = safeStocks
+      .map(stock => stock[key])
+      .filter((value): value is string => typeof value === 'string' && value.length > 0)
+    
+    const counts = values.reduce((acc, value) => {
+      acc[value] = (acc[value] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+    
+    return Object.entries(counts)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([value, count]) => ({ value, label: value, count }))
+  }
+
+  const filterOptions = [
+    {
+      label: 'Sector',
+      key: 'sector',
+      options: generateFilterOptions('sector'),
+      selectedValues: filters.sector,
+      onFilterChange: (key: string, values: string[]) => setFilters(prev => ({ ...prev, [key]: values }))
+    },
+    {
+      label: 'Currency',
+      key: 'currency',
+      options: generateFilterOptions('currency'),
+      selectedValues: filters.currency,
+      onFilterChange: (key: string, values: string[]) => setFilters(prev => ({ ...prev, [key]: values }))
+    },
+    {
+      label: 'Exchange',
+      key: 'exchange',
+      options: generateFilterOptions('exchange'),
+      selectedValues: filters.exchange,
+      onFilterChange: (key: string, values: string[]) => setFilters(prev => ({ ...prev, [key]: values }))
+    }
+  ]
+
+  const sortOptions: SortOption[] = [
+    { value: 'symbol', label: 'Symbol A-Z', direction: 'asc' },
+    { value: 'symbol_desc', label: 'Symbol Z-A', direction: 'desc' },
+    { value: 'value', label: 'Value High-Low', direction: 'desc' },
+    { value: 'value_asc', label: 'Value Low-High', direction: 'asc' },
+    { value: 'return', label: 'Return High-Low', direction: 'desc' },
+    { value: 'return_asc', label: 'Return Low-High', direction: 'asc' },
+    { value: 'date', label: 'Newest First', direction: 'desc' },
+    { value: 'date_asc', label: 'Oldest First', direction: 'asc' }
+  ]
 
   // Auto-refresh prices when stocks are loaded (optional)
   useEffect(() => {
@@ -321,7 +455,12 @@ export default function StocksPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Holdings</p>
-              <p className="text-2xl font-bold text-gray-900">{safeStocks.length}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {filteredStocks.length}
+                {filteredStocks.length !== safeStocks.length && (
+                  <span className="text-sm text-gray-500 ml-2">of {safeStocks.length}</span>
+                )}
+              </p>
             </div>
             <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
               <span className="text-lg text-blue-600">#</span>
@@ -329,6 +468,20 @@ export default function StocksPage() {
           </div>
         </div>
       </div>
+
+      {/* Search and Filter */}
+      <SearchFilter
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        filterOptions={filterOptions}
+        sortOptions={sortOptions}
+        selectedSort={sortBy}
+        onSortChange={setSortBy}
+        placeholder="Search stocks by symbol, name, or sector..."
+        showResultCount={true}
+        resultCount={sortedStocks.length}
+        className="mb-6"
+      />
 
       {/* Stocks Table */}
       <div className="bg-white rounded-lg shadow-md">
@@ -366,25 +519,34 @@ export default function StocksPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {safeStocks.length === 0 ? (
+              {sortedStocks.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center">
                       <TrendingUp className="h-12 w-12 text-gray-300 mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No stocks yet</h3>
-                      <p className="text-gray-500 mb-4">Start building your portfolio by adding your first stock.</p>
-                      <button 
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 flex items-center"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Your First Stock
-                      </button>
+                      {safeStocks.length === 0 ? (
+                        <>
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">No stocks yet</h3>
+                          <p className="text-gray-500 mb-4">Start building your portfolio by adding your first stock.</p>
+                          <button 
+                            onClick={() => setIsAddModalOpen(true)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 flex items-center"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Your First Stock
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">No stocks match your search</h3>
+                          <p className="text-gray-500 mb-4">Try adjusting your search term or filters.</p>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
               ) : (
-                safeStocks.map((stock) => (
+                sortedStocks.map((stock) => (
                   <tr key={stock.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
@@ -458,7 +620,7 @@ export default function StocksPage() {
                         Edit
                       </button>
                       <button 
-                        onClick={() => handleDeleteStock(stock.id)}
+                        onClick={() => handleDeleteStock(stock)}
                         className="text-red-600 hover:text-red-900"
                       >
                         Delete
@@ -490,6 +652,19 @@ export default function StocksPage() {
         onSubmit={handleUpdateStock}
         stock={editingStock}
         isLoading={isUpdating}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        title="Delete Stock"
+        message={`Are you sure you want to delete ${deleteConfirm.stock?.symbol || 'this stock'}? This action cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={confirmDeleteStock}
+        onCancel={cancelDeleteStock}
+        variant="danger"
+        isLoading={deleteConfirm.isDeleting}
       />
     </div>
   )

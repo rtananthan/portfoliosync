@@ -5,9 +5,13 @@ import { stocksService, ensureDefaultPortfolio } from '../services/stocksService
 import { etfService } from '../services/etfService'
 import { propertyService } from '../services/propertyService'
 import { Stock, ETF, Property } from '../types'
+import ErrorMessage from '../components/ErrorMessage'
+import ExportButton from '../components/ExportButton'
+import { parseError, logError } from '../utils/errorHandler'
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<{title: string, message: string, canRetry: boolean} | null>(null)
   const [stocks, setStocks] = useState<Stock[]>([])
   const [etfs, setETFs] = useState<ETF[]>([])
   const [properties, setProperties] = useState<Property[]>([])
@@ -27,16 +31,30 @@ export default function HomePage() {
   const loadDashboardData = async () => {
     try {
       setLoading(true)
+      setError(null)
       
       // Ensure we have a portfolio
       const defaultPortfolioId = await ensureDefaultPortfolio()
       
-      // Load all investment data in parallel
-      const [stocksData, etfsData, propertiesData] = await Promise.all([
-        stocksService.getStocks(defaultPortfolioId).catch(() => []),
-        etfService.getETFs(defaultPortfolioId).catch(() => []),
-        propertyService.getProperties(defaultPortfolioId).catch(() => [])
+      // Load all investment data in parallel with individual error handling
+      const results = await Promise.allSettled([
+        stocksService.getStocks(defaultPortfolioId),
+        etfService.getETFs(defaultPortfolioId),
+        propertyService.getProperties(defaultPortfolioId)
       ])
+      
+      // Process results and handle partial failures
+      const stocksData = results[0].status === 'fulfilled' ? results[0].value : []
+      const etfsData = results[1].status === 'fulfilled' ? results[1].value : []
+      const propertiesData = results[2].status === 'fulfilled' ? results[2].value : []
+      
+      // Log any failures for debugging
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          const serviceNames = ['stocks', 'ETFs', 'properties']
+          logError(result.reason, `Loading ${serviceNames[index]} data`)
+        }
+      })
       
       setStocks(Array.isArray(stocksData) ? stocksData : [])
       setETFs(Array.isArray(etfsData) ? etfsData : [])
@@ -46,7 +64,9 @@ export default function HomePage() {
       generateRecentActivity(stocksData || [], etfsData || [], propertiesData || [])
       
     } catch (error) {
-      console.error('Error loading dashboard data:', error)
+      const errorDetails = parseError(error)
+      setError(errorDetails)
+      logError(error, 'Loading dashboard data')
     } finally {
       setLoading(false)
     }
@@ -130,10 +150,28 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <header className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">PortfolioSync</h1>
-        <p className="text-gray-600">Modern investment tracking platform for smart investors</p>
+      <header className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">PortfolioSync</h1>
+          <p className="text-gray-600">Modern investment tracking platform for smart investors</p>
+        </div>
+        <ExportButton 
+          stocks={safeStocks} 
+          etfs={safeETFs} 
+          properties={safeProperties}
+        />
       </header>
+
+      {/* Error Display */}
+      {error && (
+        <ErrorMessage
+          title={error.title}
+          message={error.message}
+          onClose={() => setError(null)}
+          actionLabel={error.canRetry ? "Try Again" : undefined}
+          onAction={error.canRetry ? loadDashboardData : undefined}
+        />
+      )}
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

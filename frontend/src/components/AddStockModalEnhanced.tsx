@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Plus, X } from 'lucide-react';
 import { CreateStockRequest } from '../types';
+import ValidatedInput from './ValidatedInput';
+import { commonValidations, validateAndSanitize } from '../utils/validation';
+import ErrorMessage from './ErrorMessage';
 
 interface AddStockModalProps {
   isOpen: boolean;
@@ -22,48 +25,75 @@ export default function AddStockModalEnhanced({ isOpen, onClose, onSubmit, isLoa
     exchange: '',
     sector: ''
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+
+  const validationRules = {
+    symbol: { 
+      required: true, 
+      ...commonValidations.stockSymbol,
+      maxLength: 10
+    },
+    name: { 
+      maxLength: 100 
+    },
+    quantity: { 
+      required: true, 
+      ...commonValidations.positiveInteger 
+    },
+    purchasePrice: { 
+      required: true, 
+      ...commonValidations.positiveNumber 
+    },
+    purchaseDate: { 
+      required: true, 
+      ...commonValidations.date 
+    },
+    currentPrice: { 
+      ...commonValidations.positiveNumber 
+    },
+    purchaseFees: { 
+      min: 0 
+    },
+    currency: { 
+      required: true, 
+      pattern: /^[A-Z]{3}$/,
+      maxLength: 3 
+    },
+    exchange: { 
+      maxLength: 50 
+    },
+    sector: { 
+      maxLength: 50 
+    }
+  };
+
+  const handleFieldValidation = (fieldName: string, isValid: boolean, error?: string) => {
+    // Can be used for real-time validation feedback if needed
+    console.log(`Field ${fieldName} validation:`, { isValid, error });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation
-    const newErrors: Record<string, string> = {};
+    // Validate and sanitize all form data
+    const { isValid, errors, sanitizedData } = validateAndSanitize(formData, validationRules);
     
-    if (!formData.symbol.trim()) {
-      newErrors.symbol = 'Stock symbol is required';
-    }
-    
-    if (formData.quantity <= 0) {
-      newErrors.quantity = 'Quantity must be greater than 0';
-    }
-    
-    if (formData.purchasePrice <= 0) {
-      newErrors.purchasePrice = 'Purchase price must be greater than 0';
-    }
-    
-    if (!formData.purchaseDate) {
-      newErrors.purchaseDate = 'Purchase date is required';
-    }
-    
-    if (formData.currentPrice && formData.currentPrice <= 0) {
-      newErrors.currentPrice = 'Current price must be greater than 0';
-    }
-    
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    if (!isValid) {
+      setValidationErrors(errors.map(e => e.message));
       return;
     }
+    
+    setValidationErrors([]);
     
     try {
       // Set current price to purchase price if not provided
       const submitData = {
-        ...formData,
-        symbol: formData.symbol.toUpperCase(),
-        currentPrice: formData.currentPrice || formData.purchasePrice
+        ...sanitizedData,
+        symbol: sanitizedData.symbol.toUpperCase(),
+        currentPrice: sanitizedData.currentPrice || sanitizedData.purchasePrice
       };
       
-      await onSubmit(submitData);
+      await onSubmit(submitData as CreateStockRequest);
       
       // Reset form and close modal on success
       setFormData({
@@ -78,7 +108,7 @@ export default function AddStockModalEnhanced({ isOpen, onClose, onSubmit, isLoa
         exchange: '',
         sector: ''
       });
-      setErrors({});
+      setValidationErrors([]);
       
       // Add a small delay to ensure the API call completes
       setTimeout(() => {
@@ -86,7 +116,7 @@ export default function AddStockModalEnhanced({ isOpen, onClose, onSubmit, isLoa
       }, 100);
     } catch (error) {
       console.error('Error adding stock:', error);
-      setErrors({ submit: 'Failed to add stock. Please try again.' });
+      setValidationErrors(['Failed to add stock. Please try again.']);
     }
   };
 
@@ -95,14 +125,6 @@ export default function AddStockModalEnhanced({ isOpen, onClose, onSubmit, isLoa
       ...prev,
       [field]: value,
     }));
-    
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: '',
-      }));
-    }
   };
 
   if (!isOpen) return null;
@@ -126,143 +148,103 @@ export default function AddStockModalEnhanced({ isOpen, onClose, onSubmit, isLoa
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6">
-          {errors.submit && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">{errors.submit}</p>
-            </div>
+          {validationErrors.length > 0 && (
+            <ErrorMessage
+              title="Validation Errors"
+              message={validationErrors.join('. ')}
+              onClose={() => setValidationErrors([])}
+            />
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Stock Symbol */}
-            <div>
-              <label htmlFor="symbol" className="block text-sm font-medium text-gray-700 mb-1">
-                Stock Symbol *
-              </label>
-              <input
-                type="text"
-                id="symbol"
-                value={formData.symbol}
-                onChange={(e) => handleInputChange('symbol', e.target.value.toUpperCase())}
-                placeholder="e.g., AAPL, GOOGL"
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.symbol ? 'border-red-300' : 'border-gray-300'
-                }`}
-                maxLength={10}
-              />
-              {errors.symbol && <p className="text-red-500 text-sm mt-1">{errors.symbol}</p>}
-            </div>
+            <ValidatedInput
+              label="Stock Symbol"
+              name="symbol"
+              type="text"
+              value={formData.symbol}
+              onChange={(value) => handleInputChange('symbol', typeof value === 'string' ? value.toUpperCase() : value)}
+              onValidation={handleFieldValidation}
+              validationRules={validationRules.symbol}
+              placeholder="e.g., AAPL, GOOGL"
+              required
+            />
 
             {/* Company Name */}
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Company Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                placeholder="e.g., Apple Inc."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+            <ValidatedInput
+              label="Company Name"
+              name="name"
+              type="text"
+              value={formData.name || ''}
+              onChange={(value) => handleInputChange('name', value)}
+              onValidation={handleFieldValidation}
+              validationRules={validationRules.name}
+              placeholder="e.g., Apple Inc."
+            />
 
             {/* Quantity */}
-            <div>
-              <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
-                Quantity *
-              </label>
-              <input
-                type="number"
-                id="quantity"
-                value={formData.quantity || ''}
-                onChange={(e) => handleInputChange('quantity', Number(e.target.value))}
-                placeholder="100"
-                min="0.000001"
-                step="0.000001"
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.quantity ? 'border-red-300' : 'border-gray-300'
-                }`}
-              />
-              {errors.quantity && <p className="text-red-500 text-sm mt-1">{errors.quantity}</p>}
-            </div>
+            <ValidatedInput
+              label="Quantity"
+              name="quantity"
+              type="number"
+              value={formData.quantity}
+              onChange={(value) => handleInputChange('quantity', value)}
+              onValidation={handleFieldValidation}
+              validationRules={validationRules.quantity}
+              placeholder="Number of shares"
+              required
+            />
 
             {/* Purchase Price */}
-            <div>
-              <label htmlFor="purchasePrice" className="block text-sm font-medium text-gray-700 mb-1">
-                Purchase Price ($) *
-              </label>
-              <input
-                type="number"
-                id="purchasePrice"
-                value={formData.purchasePrice || ''}
-                onChange={(e) => handleInputChange('purchasePrice', Number(e.target.value))}
-                placeholder="150.00"
-                min="0.01"
-                step="0.01"
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.purchasePrice ? 'border-red-300' : 'border-gray-300'
-                }`}
-              />
-              {errors.purchasePrice && <p className="text-red-500 text-sm mt-1">{errors.purchasePrice}</p>}
-            </div>
+            <ValidatedInput
+              label="Purchase Price ($)"
+              name="purchasePrice"
+              type="number"
+              value={formData.purchasePrice}
+              onChange={(value) => handleInputChange('purchasePrice', value)}
+              onValidation={handleFieldValidation}
+              validationRules={validationRules.purchasePrice}
+              placeholder="150.00"
+              required
+            />
 
             {/* Purchase Date */}
-            <div>
-              <label htmlFor="purchaseDate" className="block text-sm font-medium text-gray-700 mb-1">
-                Purchase Date *
-              </label>
-              <input
-                type="date"
-                id="purchaseDate"
-                value={formData.purchaseDate}
-                onChange={(e) => handleInputChange('purchaseDate', e.target.value)}
-                max={new Date().toISOString().split('T')[0]}
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.purchaseDate ? 'border-red-300' : 'border-gray-300'
-                }`}
-              />
-              {errors.purchaseDate && <p className="text-red-500 text-sm mt-1">{errors.purchaseDate}</p>}
-            </div>
+            <ValidatedInput
+              label="Purchase Date"
+              name="purchaseDate"
+              type="date"
+              value={formData.purchaseDate}
+              onChange={(value) => handleInputChange('purchaseDate', value)}
+              onValidation={handleFieldValidation}
+              validationRules={validationRules.purchaseDate}
+              required
+            />
 
             {/* Purchase Fees */}
-            <div>
-              <label htmlFor="purchaseFees" className="block text-sm font-medium text-gray-700 mb-1">
-                Purchase Fees ($)
-              </label>
-              <input
-                type="number"
-                id="purchaseFees"
-                value={formData.purchaseFees || ''}
-                onChange={(e) => handleInputChange('purchaseFees', Number(e.target.value))}
-                placeholder="9.95"
-                min="0"
-                step="0.01"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p className="text-gray-500 text-xs mt-1">Brokerage fees, commissions, etc.</p>
-            </div>
+            <ValidatedInput
+              label="Purchase Fees ($)"
+              name="purchaseFees"
+              type="number"
+              value={formData.purchaseFees || 0}
+              onChange={(value) => handleInputChange('purchaseFees', value)}
+              onValidation={handleFieldValidation}
+              validationRules={validationRules.purchaseFees}
+              placeholder="9.95"
+              helpText="Brokerage fees, commissions, etc."
+            />
 
             {/* Current Price */}
-            <div>
-              <label htmlFor="currentPrice" className="block text-sm font-medium text-gray-700 mb-1">
-                Current Price ($)
-              </label>
-              <input
-                type="number"
-                id="currentPrice"
-                value={formData.currentPrice || ''}
-                onChange={(e) => handleInputChange('currentPrice', Number(e.target.value))}
-                placeholder="165.00"
-                min="0.01"
-                step="0.01"
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.currentPrice ? 'border-red-300' : 'border-gray-300'
-                }`}
-              />
-              {errors.currentPrice && <p className="text-red-500 text-sm mt-1">{errors.currentPrice}</p>}
-              <p className="text-gray-500 text-xs mt-1">Leave empty to use purchase price</p>
-            </div>
+            <ValidatedInput
+              label="Current Price ($)"
+              name="currentPrice"
+              type="number"
+              value={formData.currentPrice || 0}
+              onChange={(value) => handleInputChange('currentPrice', value)}
+              onValidation={handleFieldValidation}
+              validationRules={validationRules.currentPrice}
+              placeholder="165.00"
+              helpText="Leave empty to use purchase price"
+            />
 
             {/* Currency */}
             <div>

@@ -122,6 +122,35 @@ functions:
           path: /stocks/update-prices
           method: post
 
+  # ETF Functions
+  getETFs:
+    handler: functions/etfs/get_etfs.handler
+    events:
+      - httpApi:
+          path: /portfolios/{portfolioId}/etfs
+          method: get
+
+  createETF:
+    handler: functions/etfs/create_etf.handler
+    events:
+      - httpApi:
+          path: /portfolios/{portfolioId}/etfs
+          method: post
+
+  updateETF:
+    handler: functions/etfs/update_etf.handler
+    events:
+      - httpApi:
+          path: /etfs/{etfId}
+          method: put
+
+  deleteETF:
+    handler: functions/etfs/delete_etf.handler
+    events:
+      - httpApi:
+          path: /etfs/{etfId}
+          method: delete
+
 resources:
   Resources:
     PortfoliosTable:
@@ -140,6 +169,27 @@ resources:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: ${self:provider.environment.STOCKS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: portfolioId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: portfolioId-index
+            KeySchema:
+              - AttributeName: portfolioId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
+    ETFsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.ETFS_TABLE}
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S

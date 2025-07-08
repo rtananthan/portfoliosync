@@ -105,10 +105,10 @@ export default function HomePage() {
           <TrendingUp className="h-5 w-5 mr-2" />
           Add Stock
         </Link>
-        <button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
+        <Link to="/etfs" className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
           <BarChart3 className="h-5 w-5 mr-2" />
           Add ETF
-        </button>
+        </Link>
         <button className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
           <Home className="h-5 w-5 mr-2" />
           Add Property

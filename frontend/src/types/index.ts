@@ -25,11 +25,24 @@ export interface ETF {
   symbol: string;
   name: string;
   quantity: number;
-  averagePrice: number;
+  purchasePrice: number;          // Original purchase price per share
+  purchaseDate: string;           // Date when ETF was purchased
+  purchaseFees?: number;          // Brokerage fees and commissions
+  averagePrice: number;           // For backward compatibility
   currentPrice: number;
-  totalValue: number;
-  totalReturn: number;
-  returnPercentage: number;
+  currency?: string;              // Currency code (USD, AUD, etc.)
+  exchange?: string;              // Exchange (NASDAQ, NYSE, ASX, etc.)
+  expenseRatio?: number;          // Annual expense ratio (e.g., 0.03 for 0.03%)
+  distributionFrequency?: 'monthly' | 'quarterly' | 'semi-annually' | 'annually' | 'none';
+  lastDistributionAmount?: number; // Last distribution per share
+  lastDistributionDate?: string;   // Date of last distribution
+  category?: string;              // ETF category (Large Cap, International, Bond, etc.)
+  totalCostBasis: number;         // (purchasePrice * quantity) + purchaseFees
+  totalValue: number;             // currentPrice * quantity
+  totalReturn: number;            // totalValue - totalCostBasis
+  returnPercentage: number;       // (totalReturn / totalCostBasis) * 100
+  annualExpenseCost?: number;     // (totalValue * expenseRatio) / 100
+  daysHeld?: number;              // Days since purchase
   createdAt: string;
   updatedAt: string;
 }
@@ -86,8 +99,20 @@ export interface CreateStockRequest {
 
 export interface CreateETFRequest {
   symbol: string;
+  name?: string;
   quantity: number;
-  averagePrice: number;
+  purchasePrice: number;
+  purchaseDate: string;
+  purchaseFees?: number;
+  averagePrice?: number;          // For backward compatibility
+  currentPrice?: number;
+  currency?: string;
+  exchange?: string;
+  expenseRatio?: number;
+  distributionFrequency?: 'monthly' | 'quarterly' | 'semi-annually' | 'annually' | 'none';
+  lastDistributionAmount?: number;
+  lastDistributionDate?: string;
+  category?: string;
 }
 
 export interface CreatePropertyRequest {

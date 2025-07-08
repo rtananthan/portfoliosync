@@ -1,4 +1,4 @@
-const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'https://jhjtsrmah8.execute-api.ap-southeast-2.amazonaws.com';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'https://7mjwgcrtq0.execute-api.ap-southeast-2.amazonaws.com';
 
 // Helper function to convert Decimal string values to numbers
 function convertDecimalStrings(obj: any): any {

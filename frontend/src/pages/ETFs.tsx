@@ -151,7 +151,7 @@ const ETFs: React.FC = () => {
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">Total Value</dt>
                       <dd className="text-lg font-medium text-gray-900">
-                        ${etfs.reduce((sum, etf) => sum + etf.totalValue, 0).toLocaleString()}
+                        ${etfs.reduce((sum, etf) => sum + (Number(etf.totalValue) || 0), 0).toLocaleString()}
                       </dd>
                     </dl>
                   </div>
@@ -164,7 +164,7 @@ const ETFs: React.FC = () => {
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
                     <div className={`w-8 h-8 rounded-md flex items-center justify-center ${
-                      etfs.reduce((sum, etf) => sum + etf.totalReturn, 0) >= 0 ? 'bg-green-500' : 'bg-red-500'
+                      etfs.reduce((sum, etf) => sum + (Number(etf.totalReturn) || 0), 0) >= 0 ? 'bg-green-500' : 'bg-red-500'
                     }`}>
                       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -175,9 +175,9 @@ const ETFs: React.FC = () => {
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">Total Return</dt>
                       <dd className={`text-lg font-medium ${
-                        etfs.reduce((sum, etf) => sum + etf.totalReturn, 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                        etfs.reduce((sum, etf) => sum + (Number(etf.totalReturn) || 0), 0) >= 0 ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        ${etfs.reduce((sum, etf) => sum + etf.totalReturn, 0).toLocaleString()}
+                        ${etfs.reduce((sum, etf) => sum + (Number(etf.totalReturn) || 0), 0).toLocaleString()}
                       </dd>
                     </dl>
                   </div>
@@ -200,7 +200,7 @@ const ETFs: React.FC = () => {
                       <dt className="text-sm font-medium text-gray-500 truncate">Avg Expense Ratio</dt>
                       <dd className="text-lg font-medium text-gray-900">
                         {etfs.filter(etf => etf.expenseRatio).length > 0 ? 
-                          `${(etfs.filter(etf => etf.expenseRatio).reduce((sum, etf) => sum + (etf.expenseRatio || 0), 0) / etfs.filter(etf => etf.expenseRatio).length).toFixed(2)}%`
+                          `${(etfs.filter(etf => etf.expenseRatio).reduce((sum, etf) => sum + (Number(etf.expenseRatio) || 0), 0) / etfs.filter(etf => etf.expenseRatio).length).toFixed(2)}%`
                           : 'N/A'
                         }
                       </dd>

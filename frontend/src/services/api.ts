@@ -16,7 +16,10 @@ function convertDecimalStrings(obj: any): any {
         // Convert decimal-like string fields to numbers
         if (typeof value === 'string' && /^-?\d+\.?\d*$/.test(value) && 
             (key.includes('Price') || key.includes('Value') || key.includes('Return') || 
-             key.includes('percentage') || key === 'quantity')) {
+             key.includes('percentage') || key.includes('Percentage') || key.includes('Cost') ||
+             key.includes('Ratio') || key.includes('Amount') || key.includes('Expense') ||
+             key === 'quantity' || key === 'expenseRatio' || key === 'lastDistributionAmount' ||
+             key === 'annualExpenseCost' || key === 'daysHeld')) {
           converted[key] = parseFloat(value);
         } else {
           converted[key] = convertDecimalStrings(value);

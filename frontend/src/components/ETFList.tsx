@@ -61,13 +61,14 @@ const ETFList: React.FC<ETFListProps> = ({ etfs, onRefresh, onDelete }) => {
   };
 
   const formatPercentage = (percentage: number) => {
-    const isPositive = percentage >= 0;
+    const numPercentage = Number(percentage) || 0;
+    const isPositive = numPercentage >= 0;
     const color = isPositive ? 'text-green-600' : 'text-red-600';
     const sign = isPositive ? '+' : '';
     
     return (
       <span className={color}>
-        {sign}{percentage.toFixed(2)}%
+        {sign}{numPercentage.toFixed(2)}%
       </span>
     );
   };
@@ -222,19 +223,19 @@ const ETFList: React.FC<ETFListProps> = ({ etfs, onRefresh, onDelete }) => {
           <div>
             <span className="font-medium text-gray-900">Total Value: </span>
             <span className="text-gray-600">
-              {formatCurrency(etfs.reduce((sum, etf) => sum + etf.totalValue, 0))}
+              {formatCurrency(etfs.reduce((sum, etf) => sum + (Number(etf.totalValue) || 0), 0))}
             </span>
           </div>
           <div>
             <span className="font-medium text-gray-900">Total Cost: </span>
             <span className="text-gray-600">
-              {formatCurrency(etfs.reduce((sum, etf) => sum + etf.totalCostBasis, 0))}
+              {formatCurrency(etfs.reduce((sum, etf) => sum + (Number(etf.totalCostBasis) || 0), 0))}
             </span>
           </div>
           <div>
             <span className="font-medium text-gray-900">Total Return: </span>
-            <span className={etfs.reduce((sum, etf) => sum + etf.totalReturn, 0) >= 0 ? 'text-green-600' : 'text-red-600'}>
-              {formatCurrency(etfs.reduce((sum, etf) => sum + etf.totalReturn, 0))}
+            <span className={etfs.reduce((sum, etf) => sum + (Number(etf.totalReturn) || 0), 0) >= 0 ? 'text-green-600' : 'text-red-600'}>
+              {formatCurrency(etfs.reduce((sum, etf) => sum + (Number(etf.totalReturn) || 0), 0))}
             </span>
           </div>
           <div>
@@ -242,7 +243,7 @@ const ETFList: React.FC<ETFListProps> = ({ etfs, onRefresh, onDelete }) => {
             <span className="text-gray-600">
               {formatPercentage(
                 etfs.length > 0 
-                  ? etfs.reduce((sum, etf) => sum + etf.returnPercentage, 0) / etfs.length
+                  ? etfs.reduce((sum, etf) => sum + (Number(etf.returnPercentage) || 0), 0) / etfs.length
                   : 0
               )}
             </span>

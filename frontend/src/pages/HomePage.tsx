@@ -7,6 +7,7 @@ import { propertyService } from '../services/propertyService'
 import { Stock, ETF, Property } from '../types'
 import ErrorMessage from '../components/ErrorMessage'
 import ExportButton from '../components/ExportButton'
+import BenchmarkWidget from '../components/BenchmarkWidget'
 import { parseError, logError } from '../utils/errorHandler'
 
 export default function HomePage() {
@@ -174,7 +175,7 @@ export default function HomePage() {
       )}
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -186,6 +187,16 @@ export default function HomePage() {
             <DollarSign className="h-8 w-8 text-green-500" />
           </div>
         </div>
+
+        {/* Benchmark Widget */}
+        <BenchmarkWidget
+          portfolioValue={totalValue}
+          portfolioCostBasis={totalValue - (
+            safeStocks.reduce((sum, s) => sum + (Number(s.totalReturn) || 0), 0) +
+            safeETFs.reduce((sum, e) => sum + (Number(e.totalReturn) || 0), 0) +
+            safeProperties.reduce((sum, p) => sum + (Number(p.totalReturn) || 0), 0)
+          )}
+        />
 
         <Link to="/stocks" className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
           <div className="flex items-center justify-between">
@@ -272,7 +283,7 @@ export default function HomePage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
         <Link to="/stocks" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
           <TrendingUp className="h-5 w-5 mr-2" />
           Add Stock
@@ -284,6 +295,10 @@ export default function HomePage() {
         <Link to="/properties" className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
           <Home className="h-5 w-5 mr-2" />
           Add Property
+        </Link>
+        <Link to="/benchmark" className="bg-green-600 hover:bg-green-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
+          <TrendingUp className="h-5 w-5 mr-2" />
+          View Analytics
         </Link>
       </div>
     </div>

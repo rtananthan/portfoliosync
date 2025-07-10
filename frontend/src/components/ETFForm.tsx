@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CreateETFRequest } from '../types';
+import TagSelector from './TagSelector';
+import TagService from '../services/tagService';
 
 interface ETFFormProps {
   onSubmit: (etf: CreateETFRequest) => void;
@@ -23,10 +25,37 @@ const ETFForm: React.FC<ETFFormProps> = ({ onSubmit, onCancel, isSubmitting = fa
     lastDistributionDate: '',
     category: '',
   });
+  
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [suggestedTags, setSuggestedTags] = useState<import('../types').AssetTag[]>([]);
+
+  // Get tag suggestions based on form data
+  useEffect(() => {
+    const getSuggestions = async () => {
+      if (formData.symbol || formData.category) {
+        try {
+          const suggestions = await TagService.suggestTagsForAsset({
+            type: 'etf',
+            symbol: formData.symbol,
+            category: formData.category,
+            purchaseDate: formData.purchaseDate
+          });
+          setSuggestedTags(suggestions);
+        } catch (error) {
+          console.error('Failed to get tag suggestions:', error);
+        }
+      }
+    };
+
+    getSuggestions();
+  }, [formData.symbol, formData.category, formData.purchaseDate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit({
+      ...formData,
+      tags: selectedTags
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -264,6 +293,24 @@ const ETFForm: React.FC<ETFFormProps> = ({ onSubmit, onCancel, isSubmitting = fa
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="e.g., Large Cap, International, Bond"
               />
+            </div>
+
+            {/* Tags */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Investment Tags
+              </label>
+              <TagSelector
+                selectedTagIds={selectedTags}
+                onTagsChange={setSelectedTags}
+                suggestions={suggestedTags}
+                placeholder="Tag this ETF (e.g., Income, Conservative, International)..."
+                maxTags={8}
+                allowCustomTags={true}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Tags help categorize and analyze your ETF performance by strategy and allocation.
+              </p>
             </div>
 
             {/* Form Actions */}

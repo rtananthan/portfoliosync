@@ -7,29 +7,44 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:ci": "vitest run --coverage",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "deploy": "npm run build && aws s3 sync dist/ s3://$S3_BUCKET_NAME --delete --cache-control 'public, max-age=31536000' --exclude '*.html' && aws s3 sync dist/ s3://$S3_BUCKET_NAME --delete --cache-control 'public, max-age=0' --include '*.html'",
     "deploy:cloudfront": "aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths '/*'"
   },
   "dependencies": {
+    "@aws-amplify/auth": "^6.13.3",
+    "aws-amplify": "^6.15.3",
+    "cryptography": "^1.2.3",
+    "lucide-react": "^0.294.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.1",
-    "lucide-react": "^0.294.0"
+    "recharts": "^3.1.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
     "@typescript-eslint/eslint-plugin": "^6.10.0",
     "@typescript-eslint/parser": "^6.10.0",
     "@vitejs/plugin-react": "^4.1.1",
+    "autoprefixer": "^10.0.1",
     "eslint": "^8.53.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.4",
-    "typescript": "^5.2.2",
-    "vite": "^5.0.0",
+    "jsdom": "^26.1.0",
+    "postcss": "^8",
     "tailwindcss": "^3.3.0",
-    "autoprefixer": "^10.0.1",
-    "postcss": "^8"
+    "terser": "^5.43.1",
+    "typescript": "^5.2.2",
+    "vite": "^5.4.10",
+    "vitest": "^3.2.4"
   }
 }

@@ -1,13 +1,18 @@
 import { useState, useEffect } from 'react'
 import { TrendingUp, DollarSign, Home, BarChart3, RefreshCw } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { stocksService, ensureDefaultPortfolio } from '../services/stocksService'
-import { etfService } from '../services/etfService'
-import { propertyService } from '../services/propertyService'
-import { Stock, ETF, Property } from '../types'
+import DataService from '../services/dataService'
+import { Stock, ETF, Property, GroupAggregation } from '../types'
 import ErrorMessage from '../components/ErrorMessage'
-import ExportButton from '../components/ExportButton'
 import BenchmarkWidget from '../components/BenchmarkWidget'
+import AssetAllocationChart from '../components/AssetAllocationChart'
+import PerformanceTrendChart from '../components/PerformanceTrendChart'
+import TopPerformers from '../components/TopPerformers'
+import PortfolioGrowthTimeline from '../components/PortfolioGrowthTimeline'
+import PortfolioGroupSelector from '../components/PortfolioGroupSelector'
+import GroupDashboard from '../components/GroupDashboard'
+import TagAnalytics from '../components/TagAnalytics'
+import { ComponentErrorBoundary } from '../components/ErrorBoundary'
 import { parseError, logError } from '../utils/errorHandler'
 
 export default function HomePage() {
@@ -24,6 +29,10 @@ export default function HomePage() {
     return: number
     date: string
   }>>([])
+  
+  // Portfolio Group State
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
+  const [groupAggregation, setGroupAggregation] = useState<GroupAggregation | null>(null)
 
   useEffect(() => {
     loadDashboardData()
@@ -34,14 +43,11 @@ export default function HomePage() {
       setLoading(true)
       setError(null)
       
-      // Ensure we have a portfolio
-      const defaultPortfolioId = await ensureDefaultPortfolio()
-      
       // Load all investment data in parallel with individual error handling
       const results = await Promise.allSettled([
-        stocksService.getStocks(defaultPortfolioId),
-        etfService.getETFs(defaultPortfolioId),
-        propertyService.getProperties(defaultPortfolioId)
+        DataService.getStocks(),
+        DataService.getETFs(),
+        DataService.getProperties()
       ])
       
       // Process results and handle partial failures
@@ -71,6 +77,11 @@ export default function HomePage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleGroupChange = (groupId: string | null, aggregation?: GroupAggregation) => {
+    setSelectedGroupId(groupId)
+    setGroupAggregation(aggregation || null)
   }
 
   const generateRecentActivity = (stocksData: Stock[], etfsData: ETF[], propertiesData: Property[]) => {
@@ -142,6 +153,8 @@ export default function HomePage() {
     safeProperties.reduce((sum, property) => sum + (Number(property.returnPercentage) || 0), 0) / safeProperties.length : 0
 
   const totalValue = stocksValue + etfsValue + propertiesValue
+  const totalReturn = totalValue > 0 ? 
+    ((stocksValue * stocksReturn) + (etfsValue * etfsReturn) + (propertiesValue * propertiesReturn)) / totalValue : 0
 
   const investments = {
     stocks: { value: stocksValue, count: safeStocks.length, return: stocksReturn },
@@ -150,18 +163,28 @@ export default function HomePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <header className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">PortfolioSync</h1>
-          <p className="text-gray-600">Modern investment tracking platform for smart investors</p>
-        </div>
-        <ExportButton 
-          stocks={safeStocks} 
-          etfs={safeETFs} 
-          properties={safeProperties}
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Portfolio Group Selector */}
+      <div className="mb-6">
+        <PortfolioGroupSelector
+          selectedGroupId={selectedGroupId}
+          onGroupChange={handleGroupChange}
+          className="max-w-md"
         />
-      </header>
+      </div>
+
+      {/* Conditional Dashboard Rendering */}
+      {selectedGroupId && groupAggregation ? (
+        /* Group Dashboard View */
+        <ComponentErrorBoundary componentName="Group Dashboard">
+          <GroupDashboard 
+            groupId={selectedGroupId} 
+            aggregation={groupAggregation} 
+          />
+        </ComponentErrorBoundary>
+      ) : (
+        /* Individual Portfolio Dashboard */
+        <div className="space-y-6">{/* Original individual portfolio content */}
 
       {/* Error Display */}
       {error && (
@@ -238,6 +261,62 @@ export default function HomePage() {
         </Link>
       </div>
 
+      {/* Analytics Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <ComponentErrorBoundary componentName="Asset Allocation Chart">
+          <AssetAllocationChart 
+            stocksValue={stocksValue}
+            etfsValue={etfsValue}
+            propertiesValue={propertiesValue}
+            stocksCount={safeStocks.length}
+            etfsCount={safeETFs.length}
+            propertiesCount={safeProperties.length}
+          />
+        </ComponentErrorBoundary>
+        <ComponentErrorBoundary componentName="Performance Trend Chart">
+          <PerformanceTrendChart 
+            portfolioValue={totalValue}
+            portfolioReturn={totalReturn}
+          />
+        </ComponentErrorBoundary>
+      </div>
+
+      {/* Performance Analysis */}
+      <div className="mb-8">
+        <ComponentErrorBoundary componentName="Top Performers">
+          <TopPerformers 
+            stocks={safeStocks}
+            etfs={safeETFs}
+            properties={safeProperties}
+          />
+        </ComponentErrorBoundary>
+      </div>
+
+      {/* Portfolio Growth Timeline */}
+      <div className="mb-8">
+        <ComponentErrorBoundary componentName="Portfolio Growth Timeline">
+          <PortfolioGrowthTimeline 
+            stocks={safeStocks}
+            etfs={safeETFs}
+            properties={safeProperties}
+            totalValue={totalValue}
+          />
+        </ComponentErrorBoundary>
+      </div>
+
+      {/* Tag Analytics */}
+      <div className="mb-8">
+        <ComponentErrorBoundary componentName="Tag Analytics">
+          <TagAnalytics 
+            assets={{
+              stocks: safeStocks,
+              etfs: safeETFs,
+              properties: safeProperties
+            }}
+          />
+        </ComponentErrorBoundary>
+      </div>
+
       {/* Recent Activity */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center justify-between mb-4">
@@ -282,25 +361,27 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Link to="/stocks" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
-          <TrendingUp className="h-5 w-5 mr-2" />
-          Add Stock
-        </Link>
-        <Link to="/etfs" className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
-          <BarChart3 className="h-5 w-5 mr-2" />
-          Add ETF
-        </Link>
-        <Link to="/properties" className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
-          <Home className="h-5 w-5 mr-2" />
-          Add Property
-        </Link>
-        <Link to="/benchmark" className="bg-green-600 hover:bg-green-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
-          <TrendingUp className="h-5 w-5 mr-2" />
-          View Analytics
-        </Link>
-      </div>
+          {/* Quick Actions */}
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Link to="/stocks" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
+              <TrendingUp className="h-5 w-5 mr-2" />
+              Add Stock
+            </Link>
+            <Link to="/etfs" className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
+              <BarChart3 className="h-5 w-5 mr-2" />
+              Add ETF
+            </Link>
+            <Link to="/properties" className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
+              <Home className="h-5 w-5 mr-2" />
+              Add Property
+            </Link>
+            <Link to="/benchmark" className="bg-green-600 hover:bg-green-700 text-white font-semibold py-4 px-6 rounded-lg shadow-md transition duration-200 flex items-center justify-center">
+              <TrendingUp className="h-5 w-5 mr-2" />
+              View Analytics
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

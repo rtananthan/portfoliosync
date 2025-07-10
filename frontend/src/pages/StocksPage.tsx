@@ -8,6 +8,7 @@ import AddStockModalEnhanced from '../components/AddStockModalEnhanced'
 import EditStockModal from '../components/EditStockModal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import SearchFilter, { FilterOption, SortOption } from '../components/SearchFilter'
+import NewsWidgetDemo from '../components/NewsWidgetDemo'
 
 export default function StocksPage() {
   const [stocks, setStocks] = useState<Stock[]>([])
@@ -467,6 +468,15 @@ export default function StocksPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* News Widget */}
+      <div className="mb-8">
+        <NewsWidgetDemo
+          maxItems={5}
+          showHeader={true}
+          className="w-full"
+        />
       </div>
 
       {/* Search and Filter */}

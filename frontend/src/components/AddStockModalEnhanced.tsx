@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, X } from 'lucide-react';
 import { CreateStockRequest } from '../types';
 import ValidatedInput from './ValidatedInput';
+import TagSelector from './TagSelector';
 import { commonValidations, validateAndSanitize } from '../utils/validation';
 import ErrorMessage from './ErrorMessage';
+import TagService from '../services/tagService';
 
 interface AddStockModalProps {
   isOpen: boolean;
@@ -25,6 +27,8 @@ export default function AddStockModalEnhanced({ isOpen, onClose, onSubmit, isLoa
     exchange: '',
     sector: ''
   });
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [suggestedTags, setSuggestedTags] = useState<import('../types').AssetTag[]>([]);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   const validationRules = {
@@ -67,6 +71,27 @@ export default function AddStockModalEnhanced({ isOpen, onClose, onSubmit, isLoa
     }
   };
 
+  // Get tag suggestions based on form data
+  useEffect(() => {
+    const getSuggestions = async () => {
+      if (formData.symbol || formData.sector) {
+        try {
+          const suggestions = await TagService.suggestTagsForAsset({
+            type: 'stock',
+            symbol: formData.symbol,
+            sector: formData.sector,
+            purchaseDate: formData.purchaseDate
+          });
+          setSuggestedTags(suggestions);
+        } catch (error) {
+          console.error('Failed to get tag suggestions:', error);
+        }
+      }
+    };
+
+    getSuggestions();
+  }, [formData.symbol, formData.sector, formData.purchaseDate]);
+
   const handleFieldValidation = (fieldName: string, isValid: boolean, error?: string) => {
     // Can be used for real-time validation feedback if needed
     console.log(`Field ${fieldName} validation:`, { isValid, error });
@@ -90,7 +115,8 @@ export default function AddStockModalEnhanced({ isOpen, onClose, onSubmit, isLoa
       const submitData = {
         ...sanitizedData,
         symbol: sanitizedData.symbol.toUpperCase(),
-        currentPrice: sanitizedData.currentPrice || sanitizedData.purchasePrice
+        currentPrice: sanitizedData.currentPrice || sanitizedData.purchasePrice,
+        tags: selectedTags
       };
       
       await onSubmit(submitData as CreateStockRequest);
@@ -108,6 +134,8 @@ export default function AddStockModalEnhanced({ isOpen, onClose, onSubmit, isLoa
         exchange: '',
         sector: ''
       });
+      setSelectedTags([]);
+      setSuggestedTags([]);
       setValidationErrors([]);
       
       // Add a small delay to ensure the API call completes
@@ -311,6 +339,24 @@ export default function AddStockModalEnhanced({ isOpen, onClose, onSubmit, isLoa
                 <option value="Utilities">Utilities</option>
                 <option value="Communication Services">Communication Services</option>
               </select>
+            </div>
+
+            {/* Tags */}
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Investment Tags
+              </label>
+              <TagSelector
+                selectedTagIds={selectedTags}
+                onTagsChange={setSelectedTags}
+                suggestions={suggestedTags}
+                placeholder="Tag this investment (e.g., Growth, Long-term, ASX 200)..."
+                maxTags={8}
+                allowCustomTags={true}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Tags help categorize and analyze your investment performance by strategy, time horizon, and purpose.
+              </p>
             </div>
           </div>
 

@@ -5,6 +5,7 @@ import { etfService } from '../services/etfService';
 import { ensureDefaultPortfolio } from '../services/stocksService';
 import ETFList from '../components/ETFList';
 import ETFForm from '../components/ETFForm';
+import NewsWidgetDemo from '../components/NewsWidgetDemo';
 
 const ETFs: React.FC = () => {
   const [etfs, setETFs] = useState<ETF[]>([]);
@@ -227,6 +228,15 @@ const ETFs: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* News Widget */}
+        <div className="mb-8">
+          <NewsWidgetDemo
+            maxItems={4}
+            showHeader={true}
+            className="w-full"
+          />
+        </div>
 
         {/* ETF List */}
         <ETFList

@@ -1,4 +1,4 @@
-const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'https://7mjwgcrtq0.execute-api.ap-southeast-2.amazonaws.com';
+import config, { api } from '../config/env'
 
 // Helper function to convert Decimal string values to numbers
 function convertDecimalStrings(obj: any): any {
@@ -38,9 +38,9 @@ function convertDecimalStrings(obj: any): any {
 
 // Enhanced fetch wrapper with proper error handling
 async function apiRequest(endpoint: string, options: RequestInit = {}) {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const url = `${api.baseUrl}${endpoint}`;
   
-  const config: RequestInit = {
+  const requestConfig: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -49,14 +49,16 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
   };
 
   try {
-    console.log(`API Request: ${config.method || 'GET'} ${url}`);
+    if (config.APP_ENV === 'development') {
+      console.log(`API Request: ${requestConfig.method || 'GET'} ${url}`);
+    }
     
     // Create AbortController for timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const timeoutId = setTimeout(() => controller.abort(), api.timeout);
     
     const response = await fetch(url, {
-      ...config,
+      ...requestConfig,
       signal: controller.signal
     });
     
@@ -86,7 +88,9 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
     }
     
     let data = await response.json();
-    console.log('API Response:', data);
+    if (config.APP_ENV === 'development') {
+      console.log('API Response:', data);
+    }
     
     // Convert Decimal strings back to numbers for frontend display
     if (data) {
@@ -110,13 +114,15 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
     }
     
     // Log error details for debugging
-    console.error('API Error Details:', {
-      endpoint,
-      method: config.method || 'GET',
-      error: error.message,
-      stack: error.stack,
-      response: error.response
-    });
+    if (config.APP_ENV === 'development') {
+      console.error('API Error Details:', {
+        endpoint,
+        method: requestConfig.method || 'GET',
+        error: error.message,
+        stack: error.stack,
+        response: error.response
+      });
+    }
     
     throw error;
   }

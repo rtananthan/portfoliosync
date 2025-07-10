@@ -19,8 +19,11 @@ provider:
     ETFS_TABLE: ${self:service}-${self:provider.stage}-etfs
     PROPERTIES_TABLE: ${self:service}-${self:provider.stage}-properties
     PRICE_HISTORY_TABLE: ${self:service}-${self:provider.stage}-price-history
+    NEWS_TABLE: ${self:service}-${self:provider.stage}-news
     ALPHA_VANTAGE_API_KEY: ${env:ALPHA_VANTAGE_API_KEY, ''}
     FINNHUB_API_KEY: ${env:FINNHUB_API_KEY, ''}
+    BEDROCK_REGION: ${env:BEDROCK_REGION, 'us-east-1'}
+    NEWS_API_KEY: ${env:NEWS_API_KEY, ''}
   
   httpApi:
     cors:
@@ -61,15 +64,26 @@ provider:
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ETFS_TABLE}"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PROPERTIES_TABLE}"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PRICE_HISTORY_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.NEWS_TABLE}"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PORTFOLIOS_TABLE}/index/*"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.STOCKS_TABLE}/index/*"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ETFS_TABLE}/index/*"
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PROPERTIES_TABLE}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.NEWS_TABLE}/index/*"
         - Effect: Allow
           Action:
             - secretsmanager:GetSecretValue
           Resource:
             - "arn:aws:secretsmanager:${self:provider.region}:*:secret:portfoliosync/*"
+        - Effect: Allow
+          Action:
+            - bedrock:InvokeModel
+            - bedrock:InvokeModelWithResponseStream
+            - bedrock-agent:InvokeAgent
+            - bedrock-runtime:InvokeModel
+          Resource:
+            - "arn:aws:bedrock:${env:BEDROCK_REGION, 'us-east-1'}:*:foundation-model/*"
+            - "arn:aws:bedrock:${env:BEDROCK_REGION, 'us-east-1'}:*:agent/*"
 
 functions:
   getPortfolios:
@@ -180,6 +194,41 @@ functions:
           path: /properties/{propertyId}
           method: delete
 
+  # News Functions
+  getNews:
+    handler: functions/news/get_news.handler
+    events:
+      - httpApi:
+          path: /news/{symbol}
+          method: get
+
+  getAllNews:
+    handler: functions/news/get_all_news.handler
+    events:
+      - httpApi:
+          path: /news
+          method: get
+
+  refreshNews:
+    handler: functions/news/refresh_news.handler
+    timeout: 300  # 5 minutes for AI processing
+    events:
+      - httpApi:
+          path: /news/refresh/{symbol}
+          method: post
+      - schedule:
+          rate: rate(24 hours)
+          description: 'Daily news refresh for all symbols'
+
+  generateNewsInsights:
+    handler: functions/news/generate_insights.handler
+    timeout: 300  # 5 minutes for Bedrock processing
+    events:
+      - httpApi:
+          path: /news/insights/{symbol}
+          method: post
+
+
 resources:
   Resources:
     PortfoliosTable:
@@ -272,6 +321,42 @@ resources:
           - AttributeName: date
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
+
+    NewsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.NEWS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: symbol
+            AttributeType: S
+          - AttributeName: publishedAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: symbol-publishedAt-index
+            KeySchema:
+              - AttributeName: symbol
+                KeyType: HASH
+              - AttributeName: publishedAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: publishedAt-index
+            KeySchema:
+              - AttributeName: publishedAt
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+        TimeToLiveSpecification:
+          AttributeName: ttl
+          Enabled: true
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
 
     # Cost Monitoring and Alerts
     BillingAlarmTopic:

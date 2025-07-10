@@ -56,7 +56,13 @@
       "Bash(aws ce:*)",
       "Bash(grep:*)",
       "Bash(git filter-branch:*)",
-      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch -f --msg-filter 'sed -e \"\"/🤖 Generated with \\[Claude Code\\]/d\"\" -e \"\"/Co-Authored-By: Claude/d\"\" -e \"\"/anthropic\\.com/d\"\" | sed \"\"/^$/d\"\"' -- HEAD~3..HEAD)"
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch -f --msg-filter 'sed -e \"\"/🤖 Generated with \\[Claude Code\\]/d\"\" -e \"\"/Co-Authored-By: Claude/d\"\" -e \"\"/anthropic\\.com/d\"\" | sed \"\"/^$/d\"\"' -- HEAD~3..HEAD)",
+      "Bash(npm install:*)",
+      "Bash(npm audit:*)",
+      "Bash(npm update:*)",
+      "Bash(node:*)",
+      "Bash(touch:*)",
+      "Bash(serverless remove:*)"
     ],
     "deny": []
   }

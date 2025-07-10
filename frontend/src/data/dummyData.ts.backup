@@ -1,0 +1,547 @@
+// Comprehensive dummy data for testing all scenarios
+import { Stock, ETF, Property } from '../types'
+
+// Generate realistic stock data covering various scenarios
+export const DUMMY_STOCKS: Stock[] = [
+  // High performers - Tech stocks
+  {
+    id: '1',
+    symbol: 'CBA.AX',
+    name: 'Commonwealth Bank of Australia',
+    quantity: 50,
+    purchasePrice: 85.50,
+    averagePrice: 85.50,
+    currentPrice: 105.20,
+    purchaseDate: '2023-01-15',
+    totalCostBasis: 4275,
+    totalValue: 5260,
+    totalReturn: 985,
+    returnPercentage: 23.04,
+    exchange: 'ASX',
+    sector: 'Financial Services',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: '2',
+    portfolioId: 'default',
+    symbol: 'CSL.AX',
+    quantity: 25,
+    purchasePrice: 280.00,
+    currentPrice: 310.50,
+    purchaseDate: '2023-02-20',
+    totalValue: 7762.50,
+    totalReturn: 762.50,
+    returnPercentage: 10.89,
+    dividendYield: 1.8,
+    lastUpdated: new Date().toISOString()
+  },
+  {
+    id: '3',
+    portfolioId: 'default',
+    symbol: 'AAPL',
+    quantity: 30,
+    purchasePrice: 150.00,
+    currentPrice: 195.50,
+    purchaseDate: '2022-11-10',
+    totalValue: 5865,
+    totalReturn: 1365,
+    returnPercentage: 30.33,
+    dividendYield: 0.5,
+    lastUpdated: new Date().toISOString()
+  },
+  {
+    id: '4',
+    portfolioId: 'default',
+    symbol: 'MSFT',
+    quantity: 20,
+    purchasePrice: 245.00,
+    currentPrice: 280.75,
+    purchaseDate: '2023-03-05',
+    totalValue: 5615,
+    totalReturn: 715,
+    returnPercentage: 14.59,
+    dividendYield: 2.1,
+    lastUpdated: new Date().toISOString()
+  },
+  
+  // Medium performers
+  {
+    id: '5',
+    portfolioId: 'default',
+    symbol: 'BHP.AX',
+    quantity: 100,
+    purchasePrice: 42.80,
+    currentPrice: 45.60,
+    purchaseDate: '2023-04-12',
+    totalValue: 4560,
+    totalReturn: 280,
+    returnPercentage: 6.54,
+    dividendYield: 6.8,
+    lastUpdated: new Date().toISOString()
+  },
+  {
+    id: '6',
+    portfolioId: 'default',
+    symbol: 'WBC.AX',
+    quantity: 75,
+    purchasePrice: 28.20,
+    currentPrice: 29.85,
+    purchaseDate: '2023-05-18',
+    totalValue: 2238.75,
+    totalReturn: 123.75,
+    returnPercentage: 5.85,
+    dividendYield: 5.2,
+    lastUpdated: new Date().toISOString()
+  },
+  
+  // Poor performers / Losses
+  {
+    id: '7',
+    portfolioId: 'default',
+    symbol: 'TSLA',
+    quantity: 15,
+    purchasePrice: 220.00,
+    currentPrice: 185.30,
+    purchaseDate: '2023-06-01',
+    totalValue: 2779.50,
+    totalReturn: -520.50,
+    returnPercentage: -15.76,
+    dividendYield: 0,
+    lastUpdated: new Date().toISOString()
+  },
+  {
+    id: '8',
+    portfolioId: 'default',
+    symbol: 'ZIP.AX',
+    quantity: 200,
+    purchasePrice: 5.80,
+    currentPrice: 2.45,
+    purchaseDate: '2023-01-08',
+    totalValue: 490,
+    totalReturn: -670,
+    returnPercentage: -57.76,
+    dividendYield: 0,
+    lastUpdated: new Date().toISOString()
+  },
+  
+  // Small holdings
+  {
+    id: '9',
+    portfolioId: 'default',
+    symbol: 'GOOGL',
+    quantity: 5,
+    purchasePrice: 95.00,
+    currentPrice: 142.50,
+    purchaseDate: '2023-07-15',
+    totalValue: 712.50,
+    totalReturn: 237.50,
+    returnPercentage: 50.00,
+    dividendYield: 0,
+    lastUpdated: new Date().toISOString()
+  },
+  {
+    id: '10',
+    portfolioId: 'default',
+    symbol: 'AMD',
+    quantity: 8,
+    purchasePrice: 95.00,
+    currentPrice: 120.80,
+    purchaseDate: '2023-08-22',
+    totalValue: 966.40,
+    totalReturn: 206.40,
+    returnPercentage: 27.16,
+    dividendYield: 0,
+    lastUpdated: new Date().toISOString()
+  }
+]
+
+// Generate realistic ETF data
+export const DUMMY_ETFS: ETF[] = [
+  // Large, diversified ETFs
+  {
+    id: '1',
+    portfolioId: 'default',
+    symbol: 'VAS.AX',
+    name: 'Vanguard Australian Shares Index ETF',
+    quantity: 100,
+    purchasePrice: 78.50,
+    currentPrice: 82.30,
+    purchaseDate: '2023-01-20',
+    totalValue: 8230,
+    totalReturn: 380,
+    returnPercentage: 4.84,
+    expenseRatio: 0.10,
+    distributionYield: 4.5,
+    lastDistributionDate: '2024-06-30',
+    lastDistributionAmount: 1.85,
+    annualExpenseCost: 8.23,
+    lastUpdated: new Date().toISOString()
+  },
+  {
+    id: '2',
+    portfolioId: 'default',
+    symbol: 'VTI',
+    name: 'Vanguard Total Stock Market ETF',
+    quantity: 40,
+    purchasePrice: 185.00,
+    currentPrice: 210.25,
+    purchaseDate: '2023-02-15',
+    totalValue: 8410,
+    totalReturn: 1010,
+    returnPercentage: 13.65,
+    expenseRatio: 0.03,
+    distributionYield: 1.8,
+    lastDistributionDate: '2024-09-25',
+    lastDistributionAmount: 0.95,
+    annualExpenseCost: 2.52,
+    lastUpdated: new Date().toISOString()
+  },
+  {
+    id: '3',
+    portfolioId: 'default',
+    symbol: 'VGS.AX',
+    name: 'Vanguard MSCI Index International Shares ETF',
+    quantity: 80,
+    purchasePrice: 95.20,
+    currentPrice: 102.80,
+    purchaseDate: '2023-03-10',
+    totalValue: 8224,
+    totalReturn: 608,
+    returnPercentage: 7.98,
+    expenseRatio: 0.18,
+    distributionYield: 2.1,
+    lastDistributionDate: '2024-06-30',
+    lastDistributionAmount: 0.52,
+    annualExpenseCost: 14.80,
+    lastUpdated: new Date().toISOString()
+  },
+  
+  // Sector-specific ETFs
+  {
+    id: '4',
+    portfolioId: 'default',
+    symbol: 'NDQ.AX',
+    name: 'BetaShares NASDAQ 100 ETF',
+    quantity: 30,
+    purchasePrice: 28.50,
+    currentPrice: 32.15,
+    purchaseDate: '2023-04-05',
+    totalValue: 964.50,
+    totalReturn: 109.50,
+    returnPercentage: 12.81,
+    expenseRatio: 0.48,
+    distributionYield: 0.8,
+    lastDistributionDate: '2024-03-30',
+    lastDistributionAmount: 0.08,
+    annualExpenseCost: 4.63,
+    lastUpdated: new Date().toISOString()
+  },
+  {
+    id: '5',
+    portfolioId: 'default',
+    symbol: 'QQQ',
+    name: 'Invesco QQQ Trust ETF',
+    quantity: 12,
+    purchasePrice: 320.00,
+    currentPrice: 385.50,
+    purchaseDate: '2023-05-12',
+    totalValue: 4626,
+    totalReturn: 786,
+    returnPercentage: 20.47,
+    expenseRatio: 0.20,
+    distributionYield: 0.6,
+    lastDistributionDate: '2024-09-20',
+    lastDistributionAmount: 0.64,
+    annualExpenseCost: 9.25,
+    lastUpdated: new Date().toISOString()
+  },
+  
+  // Bond/Fixed Income ETFs
+  {
+    id: '6',
+    portfolioId: 'default',
+    symbol: 'VAF.AX',
+    name: 'Vanguard Australian Fixed Interest Index ETF',
+    quantity: 150,
+    purchasePrice: 48.80,
+    currentPrice: 47.25,
+    purchaseDate: '2023-01-30',
+    totalValue: 7087.50,
+    totalReturn: -232.50,
+    returnPercentage: -3.18,
+    expenseRatio: 0.15,
+    distributionYield: 4.2,
+    lastDistributionDate: '2024-09-30',
+    lastDistributionAmount: 0.48,
+    annualExpenseCost: 10.63,
+    lastUpdated: new Date().toISOString()
+  }
+]
+
+// Generate realistic Australian property data
+export const DUMMY_PROPERTIES: Property[] = [
+  // Residential Investment Properties
+  {
+    id: '1',
+    portfolioId: 'default',
+    address: '15 Collins Street, Melbourne VIC 3000',
+    propertyType: 'Apartment',
+    bedrooms: 2,
+    bathrooms: 2,
+    carSpaces: 1,
+    landSize: 0, // Apartment
+    floorArea: 85,
+    purchasePrice: 650000,
+    currentValue: 720000,
+    purchaseDate: '2022-03-15',
+    stampDuty: 32500,
+    legalFees: 2800,
+    inspectionCosts: 800,
+    otherCosts: 3200,
+    totalCostBase: 689300,
+    totalReturn: 30700,
+    returnPercentage: 4.45,
+    rentalYield: 5.2,
+    weeklyRent: 720,
+    annualRent: 37440,
+    managementFees: 2620,
+    councilRates: 1800,
+    waterRates: 650,
+    insurance: 1200,
+    repairsMaintenance: 2500,
+    otherExpenses: 800,
+    annualExpenses: 9570,
+    netCashFlow: 27870,
+    capitalGrowthPA: 2.8,
+    yearBuilt: 2018,
+    lastUpdated: new Date().toISOString()
+  },
+  {
+    id: '2',
+    portfolioId: 'default',
+    address: '8 Ocean Drive, Surfers Paradise QLD 4217',
+    propertyType: 'Apartment',
+    bedrooms: 1,
+    bathrooms: 1,
+    carSpaces: 1,
+    landSize: 0,
+    floorArea: 62,
+    purchasePrice: 485000,
+    currentValue: 520000,
+    purchaseDate: '2023-01-20',
+    stampDuty: 18550,
+    legalFees: 2200,
+    inspectionCosts: 650,
+    otherCosts: 2100,
+    totalCostBase: 508500,
+    totalReturn: 11500,
+    returnPercentage: 2.26,
+    rentalYield: 6.8,
+    weeklyRent: 680,
+    annualRent: 35360,
+    managementFees: 2475,
+    councilRates: 1600,
+    waterRates: 800,
+    insurance: 1100,
+    repairsMaintenance: 1800,
+    otherExpenses: 600,
+    annualExpenses: 8375,
+    netCashFlow: 26985,
+    capitalGrowthPA: 1.2,
+    yearBuilt: 2015,
+    lastUpdated: new Date().toISOString()
+  },
+  {
+    id: '3',
+    portfolioId: 'default',
+    address: '42 Smith Street, Fitzroy VIC 3065',
+    propertyType: 'Townhouse',
+    bedrooms: 3,
+    bathrooms: 2,
+    carSpaces: 2,
+    landSize: 150,
+    floorArea: 120,
+    purchasePrice: 850000,
+    currentValue: 925000,
+    purchaseDate: '2022-08-10',
+    stampDuty: 45500,
+    legalFees: 3200,
+    inspectionCosts: 900,
+    otherCosts: 4100,
+    totalCostBase: 903700,
+    totalReturn: 21300,
+    returnPercentage: 2.36,
+    rentalYield: 4.8,
+    weeklyRent: 850,
+    annualRent: 44200,
+    managementFees: 3094,
+    councilRates: 2200,
+    waterRates: 750,
+    insurance: 1800,
+    repairsMaintenance: 3500,
+    otherExpenses: 1200,
+    annualExpenses: 12544,
+    netCashFlow: 31656,
+    capitalGrowthPA: 3.2,
+    yearBuilt: 2019,
+    lastUpdated: new Date().toISOString()
+  },
+  
+  // House in outer suburbs - high yield, lower growth
+  {
+    id: '4',
+    portfolioId: 'default',
+    address: '123 Main Road, Ipswich QLD 4305',
+    propertyType: 'House',
+    bedrooms: 4,
+    bathrooms: 2,
+    carSpaces: 2,
+    landSize: 650,
+    floorArea: 180,
+    purchasePrice: 420000,
+    currentValue: 445000,
+    purchaseDate: '2023-05-15',
+    stampDuty: 14700,
+    legalFees: 1800,
+    inspectionCosts: 550,
+    otherCosts: 1600,
+    totalCostBase: 438650,
+    totalReturn: 6350,
+    returnPercentage: 1.45,
+    rentalYield: 7.8,
+    weeklyRent: 650,
+    annualRent: 33800,
+    managementFees: 2366,
+    councilRates: 1400,
+    waterRates: 600,
+    insurance: 1500,
+    repairsMaintenance: 3200,
+    otherExpenses: 1000,
+    annualExpenses: 10066,
+    netCashFlow: 23734,
+    capitalGrowthPA: 1.8,
+    yearBuilt: 2005,
+    lastUpdated: new Date().toISOString()
+  },
+  
+  // Commercial property - different dynamics
+  {
+    id: '5',
+    portfolioId: 'default',
+    address: '88 Industrial Drive, Braeside VIC 3195',
+    propertyType: 'Commercial',
+    bedrooms: 0,
+    bathrooms: 2,
+    carSpaces: 8,
+    landSize: 1200,
+    floorArea: 450,
+    purchasePrice: 1200000,
+    currentValue: 1280000,
+    purchaseDate: '2022-11-30',
+    stampDuty: 65000,
+    legalFees: 4500,
+    inspectionCosts: 1200,
+    otherCosts: 8500,
+    totalCostBase: 1279200,
+    totalReturn: 800,
+    returnPercentage: 0.06,
+    rentalYield: 8.5,
+    weeklyRent: 2000,
+    annualRent: 104000,
+    managementFees: 7280,
+    councilRates: 8500,
+    waterRates: 1200,
+    insurance: 3500,
+    repairsMaintenance: 8000,
+    otherExpenses: 2500,
+    annualExpenses: 30980,
+    netCashFlow: 73020,
+    capitalGrowthPA: 2.5,
+    yearBuilt: 1995,
+    lastUpdated: new Date().toISOString()
+  }
+]
+
+// Helper function to calculate portfolio totals
+export const calculatePortfolioTotals = () => {
+  const stocksTotal = DUMMY_STOCKS.reduce((sum, stock) => sum + stock.totalValue, 0)
+  const stocksReturn = DUMMY_STOCKS.reduce((sum, stock) => sum + stock.totalReturn, 0)
+  const stocksCostBasis = stocksTotal - stocksReturn
+  
+  const etfsTotal = DUMMY_ETFS.reduce((sum, etf) => sum + etf.totalValue, 0)
+  const etfsReturn = DUMMY_ETFS.reduce((sum, etf) => sum + etf.totalReturn, 0)
+  const etfsCostBasis = etfsTotal - etfsReturn
+  
+  const propertiesTotal = DUMMY_PROPERTIES.reduce((sum, property) => sum + property.currentValue, 0)
+  const propertiesReturn = DUMMY_PROPERTIES.reduce((sum, property) => sum + property.totalReturn, 0)
+  const propertiesCostBasis = propertiesTotal - propertiesReturn
+  
+  const grandTotal = stocksTotal + etfsTotal + propertiesTotal
+  const totalReturn = stocksReturn + etfsReturn + propertiesReturn
+  const totalCostBasis = stocksCostBasis + etfsCostBasis + propertiesCostBasis
+  const totalReturnPercentage = totalCostBasis > 0 ? (totalReturn / totalCostBasis) * 100 : 0
+  
+  return {
+    stocks: { total: stocksTotal, return: stocksReturn, costBasis: stocksCostBasis, count: DUMMY_STOCKS.length },
+    etfs: { total: etfsTotal, return: etfsReturn, costBasis: etfsCostBasis, count: DUMMY_ETFS.length },
+    properties: { total: propertiesTotal, return: propertiesReturn, costBasis: propertiesCostBasis, count: DUMMY_PROPERTIES.length },
+    portfolio: { total: grandTotal, return: totalReturn, costBasis: totalCostBasis, returnPercentage: totalReturnPercentage }
+  }
+}
+
+// Generate scenario-specific data for testing edge cases
+export const SCENARIO_DATA = {
+  // Empty portfolio scenario
+  empty: {
+    stocks: [],
+    etfs: [],
+    properties: []
+  },
+  
+  // Single asset scenarios
+  singleStock: [DUMMY_STOCKS[0]],
+  singleETF: [DUMMY_ETFS[0]],
+  singleProperty: [DUMMY_PROPERTIES[0]],
+  
+  // High loss scenario
+  majorLosses: [
+    DUMMY_STOCKS[7], // ZIP.AX -57.76%
+    {
+      ...DUMMY_ETFS[5], // VAF.AX -3.18%
+      returnPercentage: -25.0,
+      totalReturn: -1830,
+      currentPrice: 36.60
+    }
+  ],
+  
+  // High gain scenario  
+  majorGains: [
+    DUMMY_STOCKS[8], // GOOGL +50%
+    DUMMY_STOCKS[2], // AAPL +30.33%
+    DUMMY_ETFS[4]    // QQQ +20.47%
+  ],
+  
+  // Balanced portfolio
+  balanced: {
+    stocks: DUMMY_STOCKS.slice(0, 6), // Mix of gains/losses
+    etfs: DUMMY_ETFS.slice(0, 4),     // Diversified ETFs
+    properties: DUMMY_PROPERTIES.slice(0, 3) // Mix of property types
+  }
+}
+
+// Export summary for easy debugging
+export const DUMMY_DATA_SUMMARY = {
+  totalAssets: DUMMY_STOCKS.length + DUMMY_ETFS.length + DUMMY_PROPERTIES.length,
+  portfolioValue: calculatePortfolioTotals().portfolio.total,
+  totalReturn: calculatePortfolioTotals().portfolio.return,
+  returnPercentage: calculatePortfolioTotals().portfolio.returnPercentage,
+  scenarios: Object.keys(SCENARIO_DATA),
+  coverage: {
+    stockTypes: ['ASX Blue Chip', 'US Tech', 'US Large Cap', 'Speculative', 'Small Cap'],
+    etfTypes: ['Australian Index', 'US Total Market', 'International', 'Tech Sector', 'Fixed Income'],
+    propertyTypes: ['Melbourne Apartment', 'Gold Coast Apartment', 'Melbourne Townhouse', 'Regional House', 'Commercial'],
+    performanceRange: { min: -57.76, max: 50.0 },
+    valueRange: { min: 490, max: 1280000 }
+  }
+}

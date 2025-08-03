@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { Bell, Search, User, LogOut, Settings, ChevronDown, X } from 'lucide-react'
+import { Bell, Search, User, LogOut, Settings, ChevronDown, X, TrendingUp } from 'lucide-react'
 import { MobileMenuButton } from './Sidebar'
 import ExportButton from './ExportButton'
+import ThemeSelector from './ThemeSelector'
 import { LoginModal } from './LoginModal'
 import { UserProfile } from './UserProfile'
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../config/theme'
 import { Stock, ETF, Property } from '../types'
 
 interface TopNavigationProps {
@@ -21,6 +23,7 @@ export default function TopNavigation({
   properties = [] 
 }: TopNavigationProps) {
   const { isAuthenticated, user, signOut } = useAuth();
+  const { currentTheme } = useTheme();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -34,47 +37,60 @@ export default function TopNavigation({
     }
   };
   return (
-    <header className="bg-white border-b border-gray-200 px-4 py-3 lg:px-6">
+    <header className={`${currentTheme.topBar.background} border-b border-opacity-30 px-4 py-3 lg:px-6 shadow-lg`}>
       <div className="flex items-center justify-between">
-        {/* Left side - Menu button and breadcrumb */}
+        {/* Left side - Menu button and brand */}
         <div className="flex items-center space-x-4">
           <MobileMenuButton onClick={onToggleSidebar} />
           
-          {/* Breadcrumb or page title on larger screens */}
-          <div className="hidden lg:block">
-            <h1 className="text-xl font-semibold text-gray-900">
-              Investment Dashboard
-            </h1>
+          {/* Brand logo and name */}
+          <div className="flex items-center space-x-3">
+            <div className={`flex items-center justify-center w-8 h-8 ${currentTheme.topBar.logo} rounded-lg`}>
+              <TrendingUp className={`h-5 w-5 ${currentTheme.topBar.text}`} />
+            </div>
+            <div className="flex flex-col">
+              <h1 className={`text-lg font-bold ${currentTheme.topBar.text}`}>
+                PortfolioSync
+              </h1>
+              <p className={`text-xs ${currentTheme.topBar.text} opacity-75 hidden sm:block`}>
+                Smart Investment Tracking
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Right side - Actions and user menu */}
         <div className="flex items-center space-x-3">
+          {/* Theme selector */}
+          <ThemeSelector />
+
           {/* Search button */}
           <button 
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className={`p-2 rounded-lg ${currentTheme.topBar.hover} transition-colors`}
             title="Search investments"
           >
-            <Search className="h-5 w-5 text-gray-500" />
+            <Search className={`h-5 w-5 ${currentTheme.topBar.text}`} />
           </button>
 
           {/* Export button */}
           <div className="hidden md:block">
-            <ExportButton 
-              stocks={stocks}
-              etfs={etfs}
-              properties={properties}
-            />
+            <div className={`[&>button]:${currentTheme.topBar.logo} [&>button]:${currentTheme.topBar.text} [&>button]:border-white [&>button]:border-opacity-30 [&>button:hover]:bg-opacity-30`}>
+              <ExportButton 
+                stocks={stocks}
+                etfs={etfs}
+                properties={properties}
+              />
+            </div>
           </div>
 
           {/* Notifications */}
           <button 
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative"
+            className={`p-2 rounded-lg ${currentTheme.topBar.hover} transition-colors relative`}
             title="Notifications"
           >
-            <Bell className="h-5 w-5 text-gray-500" />
+            <Bell className={`h-5 w-5 ${currentTheme.topBar.text}`} />
             {/* Notification dot */}
-            <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></div>
+            <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-400 rounded-full"></div>
           </button>
 
           {/* User menu */}
@@ -83,16 +99,16 @@ export default function TopNavigation({
               <>
                 <button 
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className={`flex items-center space-x-2 p-2 rounded-lg ${currentTheme.topBar.hover} transition-colors`}
                   title="User menu"
                 >
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <User className="h-4 w-4 text-blue-600" />
+                  <div className={`w-8 h-8 ${currentTheme.topBar.logo} rounded-full flex items-center justify-center`}>
+                    <User className={`h-4 w-4 ${currentTheme.topBar.text}`} />
                   </div>
-                  <span className="hidden md:block text-sm font-medium text-gray-700">
+                  <span className={`hidden md:block text-sm font-medium ${currentTheme.topBar.text}`}>
                     {user?.givenName || 'User'}
                   </span>
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                  <ChevronDown className={`h-4 w-4 ${currentTheme.topBar.text}`} />
                 </button>
 
                 {/* User dropdown menu */}
@@ -127,7 +143,7 @@ export default function TopNavigation({
             ) : (
               <button 
                 onClick={() => setShowLoginModal(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className={`flex items-center space-x-2 px-4 py-2 ${currentTheme.topBar.logo} ${currentTheme.topBar.text} rounded-lg ${currentTheme.topBar.hover} transition-colors border border-white border-opacity-30`}
               >
                 <User className="h-4 w-4" />
                 <span className="hidden md:block text-sm font-medium">

@@ -1,0 +1,375 @@
+service: portfoliosync-backend
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.11
+  region: ${opt:region, 'ap-southeast-2'}
+  stage: ${opt:stage, 'dev'}
+  
+  memorySize: 256
+  timeout: 30
+  
+  environment:
+    STAGE: ${self:provider.stage}
+    REGION: ${self:provider.region}
+    PORTFOLIOS_TABLE: ${self:service}-${self:provider.stage}-portfolios
+    STOCKS_TABLE: ${self:service}-${self:provider.stage}-stocks
+    ETFS_TABLE: ${self:service}-${self:provider.stage}-etfs
+    PROPERTIES_TABLE: ${self:service}-${self:provider.stage}-properties
+    PRICE_HISTORY_TABLE: ${self:service}-${self:provider.stage}-price-history
+    NEWS_TABLE: ${self:service}-${self:provider.stage}-news
+    
+    # Security Configuration (Development Mode)
+    AUTH_ENABLED: false
+    DEV_MODE: true
+    VALIDATION_LEVEL: loose
+    
+    # API Keys
+    ALPHA_VANTAGE_API_KEY: ${env:ALPHA_VANTAGE_API_KEY, 'placeholder_key'}
+    FINNHUB_API_KEY: ${env:FINNHUB_API_KEY, 'placeholder_key'}
+    NEWS_API_KEY: ${env:NEWS_API_KEY, 'placeholder_key'}
+    BEDROCK_REGION: ${env:BEDROCK_REGION, 'us-east-1'}
+    
+    # Development Security Keys
+    JWT_SECRET: dev-secret-key-change-in-production
+    ENCRYPTION_KEY: dev-encryption-key-32-chars-long
+  
+  httpApi:
+    cors:
+      allowedOrigins:
+        - https://d1s0t04ct1krwo.cloudfront.net
+        - http://localhost:3000
+        - '*'
+      allowedHeaders:
+        - Content-Type
+        - Authorization
+        - X-Dev-Mode
+      allowedMethods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+  
+  tags:
+    Application: portfoliosync
+    Environment: ${opt:stage, 'dev'}
+    Project: investment-platform
+    Owner: ${env:OWNER_EMAIL, 'rtananthan@yahoo.com'}
+  
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PORTFOLIOS_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.STOCKS_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ETFS_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PROPERTIES_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PRICE_HISTORY_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.NEWS_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PORTFOLIOS_TABLE}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.STOCKS_TABLE}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ETFS_TABLE}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PROPERTIES_TABLE}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.NEWS_TABLE}/index/*"
+        - Effect: Allow
+          Action:
+            - secretsmanager:GetSecretValue
+          Resource:
+            - "arn:aws:secretsmanager:${self:provider.region}:*:secret:portfoliosync/*"
+        - Effect: Allow
+          Action:
+            - bedrock:InvokeModel
+            - bedrock:InvokeModelWithResponseStream
+            - bedrock-agent:InvokeAgent
+            - bedrock-runtime:InvokeModel
+          Resource:
+            - "arn:aws:bedrock:${env:BEDROCK_REGION, 'us-east-1'}:*:foundation-model/*"
+            - "arn:aws:bedrock:${env:BEDROCK_REGION, 'us-east-1'}:*:agent/*"
+
+functions:
+  getPortfolios:
+    handler: functions/portfolio/get_portfolios.handler
+    events:
+      - httpApi:
+          path: /portfolios
+          method: get
+
+  createPortfolio:
+    handler: functions/portfolio/create_portfolio.handler
+    events:
+      - httpApi:
+          path: /portfolios
+          method: post
+
+  getStocks:
+    handler: functions/stocks/get_stocks.handler
+    events:
+      - httpApi:
+          path: /portfolios/{portfolioId}/stocks
+          method: get
+
+  createStock:
+    handler: functions/stocks/create_stock.handler
+    events:
+      - httpApi:
+          path: /portfolios/{portfolioId}/stocks
+          method: post
+
+  updateStock:
+    handler: functions/stocks/update_stock.handler
+    events:
+      - httpApi:
+          path: /stocks/{stockId}
+          method: put
+
+  deleteStock:
+    handler: functions/stocks/delete_stock.handler
+    events:
+      - httpApi:
+          path: /stocks/{stockId}
+          method: delete
+
+  updateStockPrices:
+    handler: functions/stocks/update_prices.handler
+    timeout: 60
+    events:
+      - httpApi:
+          path: /stocks/update-prices
+          method: post
+
+  getETFs:
+    handler: functions/etfs/get_etfs.handler
+    events:
+      - httpApi:
+          path: /portfolios/{portfolioId}/etfs
+          method: get
+
+  createETF:
+    handler: functions/etfs/create_etf.handler
+    events:
+      - httpApi:
+          path: /portfolios/{portfolioId}/etfs
+          method: post
+
+  updateETF:
+    handler: functions/etfs/update_etf.handler
+    events:
+      - httpApi:
+          path: /etfs/{etfId}
+          method: put
+
+  deleteETF:
+    handler: functions/etfs/delete_etf.handler
+    events:
+      - httpApi:
+          path: /etfs/{etfId}
+          method: delete
+
+  getProperties:
+    handler: functions/properties/get_properties.handler
+    events:
+      - httpApi:
+          path: /portfolios/{portfolioId}/properties
+          method: get
+
+  createProperty:
+    handler: functions/properties/create_property.handler
+    events:
+      - httpApi:
+          path: /portfolios/{portfolioId}/properties
+          method: post
+
+  updateProperty:
+    handler: functions/properties/update_property.handler
+    events:
+      - httpApi:
+          path: /properties/{propertyId}
+          method: put
+
+  deleteProperty:
+    handler: functions/properties/delete_property.handler
+    events:
+      - httpApi:
+          path: /properties/{propertyId}
+          method: delete
+
+  getNews:
+    handler: functions/news/get_news.handler
+    events:
+      - httpApi:
+          path: /news/{symbol}
+          method: get
+
+  getAllNews:
+    handler: functions/news/get_all_news.handler
+    events:
+      - httpApi:
+          path: /news
+          method: get
+
+  refreshNews:
+    handler: functions/news/refresh_news.handler
+    timeout: 300
+    events:
+      - httpApi:
+          path: /news/refresh/{symbol}
+          method: post
+      - schedule:
+          rate: rate(24 hours)
+          description: 'Daily news refresh for all symbols'
+
+  generateNewsInsights:
+    handler: functions/news/generate_insights.handler
+    timeout: 300
+    events:
+      - httpApi:
+          path: /news/insights/{symbol}
+          method: post
+
+resources:
+  Resources:
+    PortfoliosTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.PORTFOLIOS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    StocksTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.STOCKS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: portfolioId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: portfolioId-index
+            KeySchema:
+              - AttributeName: portfolioId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
+    ETFsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.ETFS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: portfolioId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: portfolioId-index
+            KeySchema:
+              - AttributeName: portfolioId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
+    PropertiesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.PROPERTIES_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: portfolioId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: portfolioId-index
+            KeySchema:
+              - AttributeName: portfolioId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
+    PriceHistoryTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.PRICE_HISTORY_TABLE}
+        AttributeDefinitions:
+          - AttributeName: symbol
+            AttributeType: S
+          - AttributeName: date
+            AttributeType: S
+        KeySchema:
+          - AttributeName: symbol
+            KeyType: HASH
+          - AttributeName: date
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+
+    NewsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.NEWS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: symbol
+            AttributeType: S
+          - AttributeName: publishedAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: symbol-publishedAt-index
+            KeySchema:
+              - AttributeName: symbol
+                KeyType: HASH
+              - AttributeName: publishedAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: publishedAt-index
+            KeySchema:
+              - AttributeName: publishedAt
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+        TimeToLiveSpecification:
+          AttributeName: ttl
+          Enabled: true
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+
+  Outputs:
+    ApiGatewayUrl:
+      Description: "API Gateway URL"
+      Value: !Sub "https://${HttpApi}.execute-api.${self:provider.region}.amazonaws.com"
+
+plugins:
+  - serverless-offline

@@ -17,6 +17,7 @@ import {
   Users
 } from 'lucide-react'
 import config from '../config/env'
+import { useTheme } from '../config/theme'
 
 interface SidebarProps {
   isOpen: boolean
@@ -68,10 +69,10 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {/* Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={onToggle}
         />
       )}
@@ -80,7 +81,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
       <div
         className={`fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 lg:static lg:z-auto`}
+        }`}
         style={{ width: '280px' }}
       >
         {/* Header */}
@@ -96,7 +97,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
           </div>
           <button
             onClick={onToggle}
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <X className="h-5 w-5 text-gray-500" />
           </button>
@@ -180,13 +181,15 @@ interface MobileMenuButtonProps {
 }
 
 export function MobileMenuButton({ onClick }: MobileMenuButtonProps) {
+  const { currentTheme } = useTheme();
+  
   return (
     <button
       onClick={onClick}
-      className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-      aria-label="Open navigation menu"
+      className={`p-2 rounded-lg ${currentTheme.topBar.hover} transition-colors`}
+      aria-label="Toggle navigation menu"
     >
-      <Menu className="h-6 w-6 text-gray-700" />
+      <Menu className={`h-6 w-6 ${currentTheme.topBar.text}`} />
     </button>
   )
 }

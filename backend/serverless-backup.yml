@@ -1,0 +1,552 @@
+service: investment-tracker-backend
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.11
+  region: ${opt:region, 'ap-southeast-2'}
+  stage: ${opt:stage, 'dev'}
+  
+  # Cost optimization settings
+  memorySize: 256  # Start with minimal memory
+  timeout: 30      # Reasonable timeout
+  
+  # Comprehensive tagging for cost tracking
+  tags:
+    Application: investment-tracker
+    Environment: ${opt:stage, 'dev'}
+    Project: personal-finance
+    Owner: ${env:OWNER_EMAIL, 'user@example.com'}
+    CostCenter: investment-tracker-${opt:stage, 'dev'}
+    Purpose: portfolio-management
+    CreatedBy: serverless-framework
+    ManagedBy: infrastructure-as-code
+  
+  # Apply tags to all functions
+  stackTags:
+    Application: investment-tracker
+    Environment: ${opt:stage, 'dev'}
+    Project: personal-finance
+    Owner: ${env:OWNER_EMAIL, 'user@example.com'}
+    CostCenter: investment-tracker-${opt:stage, 'dev'}
+    Purpose: portfolio-management
+    CreatedBy: serverless-framework
+    ManagedBy: infrastructure-as-code
+  
+  environment:
+    STAGE: ${self:provider.stage}
+    REGION: ${self:provider.region}
+    PORTFOLIOS_TABLE: ${self:service}-${self:provider.stage}-portfolios
+    STOCKS_TABLE: ${self:service}-${self:provider.stage}-stocks
+    ETFS_TABLE: ${self:service}-${self:provider.stage}-etfs
+    PROPERTIES_TABLE: ${self:service}-${self:provider.stage}-properties
+    PRICE_HISTORY_TABLE: ${self:service}-${self:provider.stage}-price-history
+    ALPHA_VANTAGE_API_KEY: ${env:ALPHA_VANTAGE_API_KEY}
+    FINNHUB_API_KEY: ${env:FINNHUB_API_KEY}
+  
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PORTFOLIOS_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.STOCKS_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ETFS_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PROPERTIES_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PRICE_HISTORY_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PORTFOLIOS_TABLE}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.STOCKS_TABLE}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.ETFS_TABLE}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.PROPERTIES_TABLE}/index/*"
+
+functions:
+  # Portfolio functions
+  getPortfolios:
+    handler: functions/portfolio/get_portfolios.handler
+    events:
+      - httpApi:
+          path: /portfolios
+          method: get
+
+  getPortfolio:
+    handler: functions/portfolio/get_portfolio.handler
+    events:
+      - httpApi:
+          path: /portfolios/{id}
+          method: get
+
+  createPortfolio:
+    handler: functions/portfolio/create_portfolio.handler
+    events:
+      - httpApi:
+          path: /portfolios
+          method: post
+
+  updatePortfolio:
+    handler: functions/portfolio/update_portfolio.handler
+    events:
+      - httpApi:
+          path: /portfolios/{id}
+          method: put
+
+  deletePortfolio:
+    handler: functions/portfolio/delete_portfolio.handler
+    events:
+      - httpApi:
+          path: /portfolios/{id}
+          method: delete
+
+  # Stock functions
+  getStocks:
+    handler: functions/stocks/get_stocks.handler
+    events:
+      - httpApi:
+          path: /portfolios/{portfolioId}/stocks
+          method: get
+
+  createStock:
+    handler: functions/stocks/create_stock.handler
+    events:
+      - httpApi:
+          path: /portfolios/{portfolioId}/stocks
+          method: post
+
+  updateStock:
+    handler: functions/stocks/update_stock.handler
+    events:
+      - httpApi:
+          path: /stocks/{id}
+          method: put
+
+  deleteStock:
+    handler: functions/stocks/delete_stock.handler
+    events:
+      - httpApi:
+          path: /stocks/{id}
+          method: delete
+
+  # ETF functions
+  getETFs:
+    handler: functions/etfs/get_etfs.handler
+    events:
+      - httpApi:
+          path: /portfolios/{portfolioId}/etfs
+          method: get
+
+  createETF:
+    handler: functions/etfs/create_etf.handler
+    events:
+      - httpApi:
+          path: /portfolios/{portfolioId}/etfs
+          method: post
+
+  updateETF:
+    handler: functions/etfs/update_etf.handler
+    events:
+      - httpApi:
+          path: /etfs/{id}
+          method: put
+
+  deleteETF:
+    handler: functions/etfs/delete_etf.handler
+    events:
+      - httpApi:
+          path: /etfs/{id}
+          method: delete
+
+  # Property functions
+  getProperties:
+    handler: functions/properties/get_properties.handler
+    events:
+      - httpApi:
+          path: /portfolios/{portfolioId}/properties
+          method: get
+
+  createProperty:
+    handler: functions/properties/create_property.handler
+    events:
+      - httpApi:
+          path: /portfolios/{portfolioId}/properties
+          method: post
+
+  updateProperty:
+    handler: functions/properties/update_property.handler
+    events:
+      - httpApi:
+          path: /properties/{id}
+          method: put
+
+  deleteProperty:
+    handler: functions/properties/delete_property.handler
+    events:
+      - httpApi:
+          path: /properties/{id}
+          method: delete
+
+  # Price functions
+  updatePrices:
+    handler: functions/prices/update_prices.handler
+    events:
+      - schedule: rate(1 hour)
+
+  getPriceHistory:
+    handler: functions/prices/get_price_history.handler
+    events:
+      - httpApi:
+          path: /prices/{symbol}/history
+          method: get
+
+resources:
+  Resources:
+    # S3 Bucket for Frontend
+    FrontendBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:service}-${self:provider.stage}-frontend
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        WebsiteConfiguration:
+          IndexDocument: index.html
+          ErrorDocument: index.html
+        # Lifecycle configuration for cost optimization
+        LifecycleConfiguration:
+          Rules:
+            - Id: DeleteIncompleteMultipartUploads
+              Status: Enabled
+              AbortIncompleteMultipartUpload:
+                DaysAfterInitiation: 1
+        Tags:
+          - Key: Application
+            Value: investment-tracker
+          - Key: Environment
+            Value: ${opt:stage, 'dev'}
+          - Key: Project
+            Value: personal-finance
+          - Key: Owner
+            Value: ${env:OWNER_EMAIL, 'user@example.com'}
+          - Key: CostCenter
+            Value: investment-tracker-${opt:stage, 'dev'}
+          - Key: Purpose
+            Value: frontend-hosting
+          - Key: ResourceType
+            Value: s3-bucket
+          - Key: CreatedBy
+            Value: serverless-framework
+
+    # S3 Bucket Policy
+    FrontendBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref FrontendBucket
+        PolicyDocument:
+          Statement:
+            - Sid: PublicReadGetObject
+              Effect: Allow
+              Principal: "*"
+              Action: s3:GetObject
+              Resource: !Sub "${FrontendBucket}/*"
+
+    # CloudFront Distribution
+    FrontendDistribution:
+      Type: AWS::CloudFront::Distribution
+      Properties:
+        DistributionConfig:
+          Origins:
+            - DomainName: !GetAtt FrontendBucket.RegionalDomainName
+              Id: S3Origin
+              S3OriginConfig:
+                OriginAccessIdentity: ""
+          Enabled: true
+          DefaultRootObject: index.html
+          DefaultCacheBehavior:
+            TargetOriginId: S3Origin
+            ViewerProtocolPolicy: redirect-to-https
+            Compress: true
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+            TrustedSigners:
+              - self
+          CustomErrorResponses:
+            - ErrorCode: 404
+              ResponseCode: 200
+              ResponsePagePath: /index.html
+            - ErrorCode: 403
+              ResponseCode: 200
+              ResponsePagePath: /index.html
+          # Cost optimization: Use cheapest price class
+          PriceClass: PriceClass_100
+        Tags:
+          - Key: Application
+            Value: investment-tracker
+          - Key: Environment
+            Value: ${opt:stage, 'dev'}
+          - Key: Project
+            Value: personal-finance
+          - Key: Owner
+            Value: ${env:OWNER_EMAIL, 'user@example.com'}
+          - Key: CostCenter
+            Value: investment-tracker-${opt:stage, 'dev'}
+          - Key: Purpose
+            Value: cdn-distribution
+          - Key: ResourceType
+            Value: cloudfront-distribution
+          - Key: CreatedBy
+            Value: serverless-framework
+
+    # DynamoDB Tables
+    PortfoliosTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.PORTFOLIOS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        # Cost optimization: Point-in-time recovery only if needed
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: false
+        # Deletion protection for production
+        DeletionProtectionEnabled: false
+        Tags:
+          - Key: Application
+            Value: investment-tracker
+          - Key: Environment
+            Value: ${opt:stage, 'dev'}
+          - Key: Project
+            Value: personal-finance
+          - Key: Owner
+            Value: ${env:OWNER_EMAIL, 'user@example.com'}
+          - Key: CostCenter
+            Value: investment-tracker-${opt:stage, 'dev'}
+          - Key: Purpose
+            Value: portfolio-storage
+          - Key: ResourceType
+            Value: dynamodb-table
+          - Key: CreatedBy
+            Value: serverless-framework
+
+    StocksTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.STOCKS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: portfolioId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: portfolioId-index
+            KeySchema:
+              - AttributeName: portfolioId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
+    ETFsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.ETFS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: portfolioId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: portfolioId-index
+            KeySchema:
+              - AttributeName: portfolioId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
+    PropertiesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.PROPERTIES_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: portfolioId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: portfolioId-index
+            KeySchema:
+              - AttributeName: portfolioId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
+    PriceHistoryTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.PRICE_HISTORY_TABLE}
+        AttributeDefinitions:
+          - AttributeName: symbol
+            AttributeType: S
+          - AttributeName: date
+            AttributeType: S
+        KeySchema:
+          - AttributeName: symbol
+            KeyType: HASH
+          - AttributeName: date
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        Tags:
+          - Key: Application
+            Value: investment-tracker
+          - Key: Environment
+            Value: ${opt:stage, 'dev'}
+          - Key: Project
+            Value: personal-finance
+          - Key: Owner
+            Value: ${env:OWNER_EMAIL, 'user@example.com'}
+          - Key: CostCenter
+            Value: investment-tracker-${opt:stage, 'dev'}
+          - Key: Purpose
+            Value: price-history-storage
+          - Key: ResourceType
+            Value: dynamodb-table
+          - Key: CreatedBy
+            Value: serverless-framework
+
+    # Cost Monitoring and Alerts
+    BillingAlarmTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:service}-${self:provider.stage}-billing-alerts
+        DisplayName: Investment Tracker Billing Alerts
+        Tags:
+          - Key: Application
+            Value: investment-tracker
+          - Key: Environment
+            Value: ${opt:stage, 'dev'}
+          - Key: CostCenter
+            Value: investment-tracker-${opt:stage, 'dev'}
+          - Key: Purpose
+            Value: cost-monitoring
+          - Key: ResourceType
+            Value: sns-topic
+
+    BillingAlarmSubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Protocol: email
+        TopicArn: !Ref BillingAlarmTopic
+        Endpoint: ${env:OWNER_EMAIL, 'user@example.com'}
+
+    # Billing alarm for $5 threshold (adjust as needed)
+    BillingAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: ${self:service}-${self:provider.stage}-billing-alarm
+        AlarmDescription: Billing alarm for Investment Tracker application
+        MetricName: EstimatedCharges
+        Namespace: AWS/Billing
+        Statistic: Maximum
+        Period: 86400  # 24 hours
+        EvaluationPeriods: 1
+        Threshold: 5.00  # $5 USD threshold
+        ComparisonOperator: GreaterThanThreshold
+        Dimensions:
+          - Name: Currency
+            Value: USD
+        AlarmActions:
+          - !Ref BillingAlarmTopic
+        Tags:
+          - Key: Application
+            Value: investment-tracker
+          - Key: Environment
+            Value: ${opt:stage, 'dev'}
+          - Key: CostCenter
+            Value: investment-tracker-${opt:stage, 'dev'}
+          - Key: Purpose
+            Value: cost-monitoring
+          - Key: ResourceType
+            Value: cloudwatch-alarm
+
+    # Cost Budget (requires AWS Budgets service)
+    CostBudget:
+      Type: AWS::Budgets::Budget
+      Properties:
+        Budget:
+          BudgetName: ${self:service}-${self:provider.stage}-monthly-budget
+          BudgetLimit:
+            Amount: 10.00  # $10 monthly budget
+            Unit: USD
+          TimeUnit: MONTHLY
+          BudgetType: COST
+          CostFilters:
+            TagKeyValue:
+              - "CostCenter$investment-tracker-${opt:stage, 'dev'}"
+        NotificationsWithSubscribers:
+          - Notification:
+              NotificationType: ACTUAL
+              ComparisonOperator: GREATER_THAN
+              Threshold: 80  # Alert at 80% of budget
+              ThresholdType: PERCENTAGE
+            Subscribers:
+              - SubscriptionType: EMAIL
+                Address: ${env:OWNER_EMAIL, 'user@example.com'}
+          - Notification:
+              NotificationType: FORECASTED
+              ComparisonOperator: GREATER_THAN
+              Threshold: 100  # Alert when forecasted to exceed 100%
+              ThresholdType: PERCENTAGE
+            Subscribers:
+              - SubscriptionType: EMAIL
+                Address: ${env:OWNER_EMAIL, 'user@example.com'}
+
+  Outputs:
+    ApiGatewayUrl:
+      Description: "API Gateway URL"
+      Value: !Sub "https://${HttpApi}.execute-api.${self:provider.region}.amazonaws.com"
+    
+    FrontendBucketName:
+      Description: "Frontend S3 Bucket Name"
+      Value: !Ref FrontendBucket
+      Export:
+        Name: ${self:service}-${self:provider.stage}-frontend-bucket
+    
+    CloudFrontDistributionId:
+      Description: "CloudFront Distribution ID"
+      Value: !Ref FrontendDistribution
+      Export:
+        Name: ${self:service}-${self:provider.stage}-cloudfront-id
+    
+    CloudFrontUrl:
+      Description: "CloudFront Distribution URL"
+      Value: !GetAtt FrontendDistribution.DomainName
+      Export:
+        Name: ${self:service}-${self:provider.stage}-cloudfront-url
+
+plugins:
+  - serverless-python-requirements
+  - serverless-offline

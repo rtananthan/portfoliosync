@@ -62,7 +62,9 @@
       "Bash(npm update:*)",
       "Bash(node:*)",
       "Bash(touch:*)",
-      "Bash(serverless remove:*)"
+      "Bash(serverless remove:*)",
+      "Bash(git push:*)",
+      "Bash(npx serverless:*)"
     ],
     "deny": []
   }

@@ -16,7 +16,7 @@ export type DataMode = 'real' | 'dummy' | 'scenario'
 export type ScenarioType = keyof typeof SCENARIO_DATA
 
 // Data mode configuration
-let currentDataMode: DataMode = config.APP_ENV === 'development' ? 'dummy' : 'real'
+let currentDataMode: DataMode = 'real'  // Force real mode for testing
 let currentScenario: ScenarioType = 'balanced'
 
 // Data mode management

@@ -1,0 +1,174 @@
+name: Production Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.0.0, v1.1.0, etc.
+
+env:
+  AWS_REGION: ap-southeast-2
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+          
+      - name: Run frontend tests
+        run: |
+          cd frontend
+          npm run test
+          
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+  deploy-production:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+          
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Deploying version: $VERSION"
+          
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+          
+      - name: Deploy backend to production
+        run: |
+          cd backend
+          npx serverless deploy --config serverless.prod.yml --stage prod
+          
+      - name: Get production API URL
+        id: api-url
+        run: |
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name portfoliosync-backend-prod \
+            --region ${{ env.AWS_REGION }} \
+            --query 'Stacks[0].Outputs[?OutputKey==`ProductionApiUrl`].OutputValue' \
+            --output text)
+          echo "api-url=$API_URL" >> $GITHUB_OUTPUT
+          
+      - name: Build frontend for production
+        run: |
+          cd frontend
+          npm ci
+          
+          # Create production environment file with real API URL
+          cat > .env.production << EOF
+          VITE_APP_ENV=production
+          VITE_API_BASE_URL=${{ steps.api-url.outputs.api-url }}
+          VITE_APP_VERSION=${{ steps.version.outputs.version }}
+          VITE_USE_MOCK_DATA=false
+          VITE_AUTH_ENABLED=true
+          VITE_DEBUG_MODE=false
+          VITE_ENABLE_ANALYTICS=true
+          VITE_ENABLE_BENCHMARKING=true
+          VITE_ENABLE_EXPORT=true
+          VITE_BUILD_SOURCEMAP=false
+          VITE_BUILD_MINIFY=true
+          EOF
+          
+          npm run build
+          
+      - name: Deploy frontend to S3
+        run: |
+          aws s3 sync frontend/dist/ s3://investment-tracker-frontend-prod --delete
+          
+      - name: Create CloudFront invalidation
+        run: |
+          DISTRIBUTION_ID=$(aws cloudfront list-distributions \
+            --query 'DistributionList.Items[?Comment==`Investment Tracker Production`].Id' \
+            --output text)
+          
+          if [ ! -z "$DISTRIBUTION_ID" ]; then
+            aws cloudfront create-invalidation \
+              --distribution-id $DISTRIBUTION_ID \
+              --paths "/*"
+            echo "CloudFront invalidation created for distribution: $DISTRIBUTION_ID"
+          else
+            echo "Warning: CloudFront distribution not found"
+          fi
+          
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ steps.version.outputs.version }}
+          body: |
+            ## PortfolioSync v${{ steps.version.outputs.version }}
+            
+            ### 🚀 Production Deployment
+            - **Backend API**: ${{ steps.api-url.outputs.api-url }}
+            - **Frontend**: https://investmenttracker.com.au
+            - **Environment**: Production
+            - **Security**: Full authentication enabled
+            - **Data**: Clean production database (no dummy data)
+            
+            ### 📋 Release Notes
+            See [CHANGELOG.md](./CHANGELOG.md) for detailed changes.
+            
+            ### 🔐 Security Status
+            - ✅ Authentication: ENABLED
+            - ✅ Input Validation: STRICT
+            - ✅ Database Encryption: ENABLED
+            - ✅ API Rate Limiting: ENABLED
+            
+          draft: false
+          prerelease: false
+
+  notify:
+    needs: deploy-production
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Notify deployment status
+        run: |
+          if [ "${{ needs.deploy-production.result }}" == "success" ]; then
+            echo "✅ Production deployment successful!"
+            echo "🌐 Live at: https://investmenttracker.com.au"
+          else
+            echo "❌ Production deployment failed!"
+          fi

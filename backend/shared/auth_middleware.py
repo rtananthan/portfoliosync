@@ -20,9 +20,14 @@ class AuthMiddleware:
         self.cognito_user_pool_id = os.environ.get('COGNITO_USER_POOL_ID')
         self.cognito_client_id = os.environ.get('COGNITO_CLIENT_ID')
         self.region = os.environ.get('REGION', 'ap-southeast-2')
-        self.auth_enabled = os.environ.get('AUTH_ENABLED', 'true').lower() == 'true'
+        self.stage = os.environ.get('STAGE', 'dev')
+        self.auth_enabled = os.environ.get('AUTH_ENABLED', 'true' if self.stage == 'prod' else 'false').lower() == 'true'
         self.jwt_secret = os.environ.get('JWT_SECRET', 'dev-secret-key-change-in-production')
         self.cognito_client = boto3.client('cognito-idp', region_name=self.region)
+        
+        # Development bypass settings
+        self.dev_mode_enabled = self.stage in ['dev', 'local'] or os.environ.get('DEV_MODE', 'false').lower() == 'true'
+        self.dev_bypass_header = 'X-Dev-Mode'
         
         # Cache for JWKs
         self._jwks_cache = None
@@ -90,19 +95,20 @@ class AuthMiddleware:
             raise AuthenticationError(f"Failed to extract user from token: {str(e)}")
     
     def authenticate_request(self, event: Dict[str, Any]) -> Dict[str, Any]:
-        """Authenticate incoming request"""
+        """Authenticate incoming request with environment-based logic"""
+        headers = event.get('headers', {})
+        
+        # Check for development bypass header
+        if self.dev_mode_enabled and headers.get(self.dev_bypass_header) == 'true':
+            logger.info("Development bypass enabled - allowing request")
+            return self._get_mock_user_data()
+        
         # Skip authentication in development if disabled
         if not self.auth_enabled:
-            logger.info("Authentication disabled - allowing request")
-            return {
-                'cognito_id': 'dev-user-123',
-                'email': 'dev@example.com',
-                'given_name': 'Dev',
-                'family_name': 'User'
-            }
+            logger.info(f"Authentication disabled for stage '{self.stage}' - allowing request")
+            return self._get_mock_user_data()
         
         # Get authorization header
-        headers = event.get('headers', {})
         auth_header = headers.get('authorization') or headers.get('Authorization')
         
         if not auth_header:
@@ -119,12 +125,25 @@ class AuthMiddleware:
         
         return user_info
     
+    def _get_mock_user_data(self) -> Dict[str, Any]:
+        """Return mock user data for development"""
+        return {
+            'cognito_id': f'dev-user-{self.stage}',
+            'email': f'dev-user@{self.stage}.example.com',
+            'given_name': 'Dev',
+            'family_name': 'User',
+            'stage': self.stage,
+            'is_mock': True
+        }
+    
     def create_auth_response(self, status_code: int, message: str, data: Optional[Dict] = None) -> Dict[str, Any]:
         """Create standardized authentication response"""
         response_body = {
             'message': message,
             'timestamp': str(int(time.time())),
-            'auth_enabled': self.auth_enabled
+            'auth_enabled': self.auth_enabled,
+            'stage': self.stage,
+            'dev_mode': self.dev_mode_enabled
         }
         
         if data:

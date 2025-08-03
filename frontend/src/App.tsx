@@ -3,6 +3,7 @@ import { lazy, Suspense, useState, useEffect } from 'react'
 import ErrorBoundary from './components/ErrorBoundary'
 import Layout from './components/Layout'
 import { AuthProvider } from './contexts/AuthContext'
+import { ThemeProvider } from './config/theme'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import DataService from './services/dataService'
 import { Stock, ETF, Property } from './types'
@@ -51,28 +52,30 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <ProtectedRoute requireAuth={(import.meta as any).env.VITE_AUTH_ENABLED !== 'false'}>
-          <Layout 
-            stocks={stocks}
-            etfs={etfs}
-            properties={properties}
-            onDataChange={loadPortfolioData}
-          >
-            <Suspense fallback={<LoadingFallback />}>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/stocks" element={<StocksPage />} />
-                <Route path="/etfs" element={<ETFs />} />
-                <Route path="/properties" element={<Properties />} />
-                <Route path="/benchmark" element={<BenchmarkPage />} />
-                <Route path="/groups" element={<PortfolioGroupsPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-              </Routes>
-            </Suspense>
-          </Layout>
-        </ProtectedRoute>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <ProtectedRoute requireAuth={(import.meta as any).env.VITE_AUTH_ENABLED !== 'false'}>
+            <Layout 
+              stocks={stocks}
+              etfs={etfs}
+              properties={properties}
+              onDataChange={loadPortfolioData}
+            >
+              <Suspense fallback={<LoadingFallback />}>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/stocks" element={<StocksPage />} />
+                  <Route path="/etfs" element={<ETFs />} />
+                  <Route path="/properties" element={<Properties />} />
+                  <Route path="/benchmark" element={<BenchmarkPage />} />
+                  <Route path="/groups" element={<PortfolioGroupsPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                </Routes>
+              </Suspense>
+            </Layout>
+          </ProtectedRoute>
+        </AuthProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   )
 }
